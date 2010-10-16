@@ -133,7 +133,7 @@ Simplest Image POST::
   }
 
 POSTing this to http://catalog.example.com/api/image/ will return a simple 
-representation representation::
+representation::
 
   { 
     "hash": null,
