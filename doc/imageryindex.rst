@@ -143,6 +143,7 @@ representation::
     "file_size": null,
     "id": 1,
     "crs": null,
+    "archive": true,
     "license": {
       "url":  "",
       "flags": {},
@@ -156,12 +157,21 @@ representation::
     "width": 200
   }
 
+The "archive" flag will be set to True by default. If the image you are
+uploading has been processed, then you should set this property to false,
+to indicate that it is a processed image. See :ref:`optimized` for more 
+information on processed images.
+
+Note that the OAM server will 'crawl'/spider processed images, confirming
+that they meet the specification outlined in the linked document. If your
+image is marked processed, but the image is not in the format specified,
+the image will be reverted to an 'archive' image, and a warning will be 
+recorded in the database.
+
 Server
 ++++++
 
-Currently, an implementation of the OAM ImageryIndex is available and running
+Currently, an implementation of the OAM Imagery Index is available and running
 at:
 
   http://oam.osgeo.org/
-
-  
