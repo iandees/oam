@@ -73,6 +73,8 @@ TEMPLATE_DIRS = (
     # Don't forget to use absolute paths, not relative paths.
 )
 
+HISTORY_SUPPORT = True
+
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -81,5 +83,8 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     'main',
-    'django.contrib.gis'
+    'django.contrib.gis',
 )
+
+if HISTORY_SUPPORT == True:
+    INSTALLED_APPS = INSTALLED_APPS + ("fullhistory",)

@@ -1,6 +1,15 @@
 from django.contrib.gis.db import models
 from django.contrib.auth.models import User
 from main.helpers import ApplicationError
+from django.conf import settings
+from django.contrib.gis.geos import Polygon
+if settings.HISTORY_SUPPORT:
+    import fullhistory
+    from fullhistory.models import HistoryField
+    history_support = True
+else:
+    history_support = False
+    HistoryField = models.BooleanField
 
 class License(models.Model):
     name = models.CharField(max_length=255)
@@ -10,6 +19,7 @@ class License(models.Model):
     additional = models.TextField()
     url = models.CharField(max_length=255, blank=True, null=True)
     flaglist = ['noncommercial', 'attribution', 'sharealike']
+    history = HistoryField()
     def from_json(self, data):
         errors = []
         for key in ['name', 'url', 'restrictions', 'url']:
@@ -22,7 +32,6 @@ class License(models.Model):
                 setattr(self, flag, True)
             else:
                 setattr(self, flag, False)
-        self.save()
         return self
     def to_json(self):
         flags = {}
@@ -109,7 +118,7 @@ class Image(models.Model):
     file_size = models.IntegerField(blank=True,null=True)
     file_format = models.CharField(max_length=255, blank=True,null=True)
     crs = models.CharField(max_length=100, blank=True, null=True)
-    bbox = models.CharField(max_length=255)
+    bbox = models.PolygonField()
     width = models.IntegerField()
     height = models.IntegerField()
     hash = models.CharField(max_length=100, blank=True, null=True)
@@ -119,45 +128,44 @@ class Image(models.Model):
     vrt_date = models.DateTimeField(blank=True,null=True)
     archive = models.BooleanField(default=True)
     owner = models.ForeignKey(User)
+    history = HistoryField()
     def from_json(self, data):
         required_keys = ['url', 'width', 'height']
         optional_keys = ['file_size', 'file_format', 'hash', 'crs', 'vrt', 'archive']
         errors = []
         warnings = []
         for key in required_keys:
-            if key in data:
+            if key in data and data[key] != getattr(self, key):
                 setattr(self, key, data[key])
             elif getattr(self, key) == None:
                 errors.append("No %s provided for image." % key)
         for key in optional_keys:
-            if key in data:
+            if key in data and data[key] != getattr(self, key):
                 setattr(self, key, data[key])
             else:
                 warnings.append("Missing %s in image data. This is a recommended field." % key)
         if 'layer' in data:
             errors.append("No layer handling available at this time. Please upload images without a Layer identifier.")
         if 'bbox' in data:
-            self.bbox = ",".join(map(str,data['bbox']))
-        else:
+            geom = Polygon.from_bbox(data['bbox'])
+            self.bbox = geom
+        elif not self.bbox:
             errors.append("No BBOX provided for image.")
-        if 'archive' in data:
-            self.archive = data['archive']
-        if not 'license' in data:
+        if not 'license' in data and not self.license:
             errors.append("No license ID was passed")
-        elif isinstance(data['license'], int):
+        elif 'license' in data and isinstance(data['license'], int):
             self.license = License.objects.get(pk=data['license'])
-        elif isinstance(data['license'], dict):
+        elif 'license' in data and isinstance(data['license'], dict):
              l = License()
              l.from_json(data['license'])
              l.save()
              self.license = l
-        else:
+        elif not self.license:
             errors.append("Some license information is required.")
         if errors:
             raise ApplicationError(errors)
         self.vrt_date = None
         self.owner = User.objects.get(pk=1)
-        self.save()
         return self
     def to_json(self):
         return {
@@ -166,7 +174,7 @@ class Image(models.Model):
             'file_size': self.file_size,
             'file_format': self.file_format,
             'crs': self.crs,
-            'bbox': map(float, self.bbox.split(",")),
+            'bbox': list(self.bbox.extent),
             'width': self.width,
             'height': self.height,
             'hash': self.hash,
@@ -175,3 +183,8 @@ class Image(models.Model):
             'vrt': self.vrt,
             'vrt_date': self.vrt_date
         }    
+
+
+if history_support:
+    fullhistory.register_model(Image)        
+    fullhistory.register_model(License)        
