@@ -86,9 +86,12 @@ INSTALLED_APPS = (
     'main',
     'django.contrib.gis',
     'registration',
+    'oauth_provider',
 )
 
 ACCOUNT_ACTIVATION_DAYS = 7
 
 if HISTORY_SUPPORT == True:
     INSTALLED_APPS = INSTALLED_APPS + ("fullhistory",)
+
+OAUTH_AUTHORIZE_VIEW = "main.views.oauth_authorize"   

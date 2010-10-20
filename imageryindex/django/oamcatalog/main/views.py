@@ -4,7 +4,7 @@ import simplejson
 from main.models import Layer, Image, User, License
 from main.helpers import *
 from django.shortcuts import render_to_response
-
+from oauth_provider.decorators import oauth_required
 @jsonexception
 def layer(request, id=None):
     if id == None and request.method == "POST":
@@ -45,6 +45,7 @@ def license(request, id=None):
         }   
         return json_response(request, data)
 
+@oauth_required
 @jsonexception
 def image(request, id=None):
     if id == None and request.method == "POST":
@@ -97,3 +98,7 @@ def license_browse(request, id):
 def image_browse(request, id):
     i = Image.objects.get(pk=id)
     return render_to_response("image.html", {'image': i})
+
+def oauth_authorize(request, token, callback, params):  
+    
+    return render_to_response("oauth_authorize.html", {'token': token})
