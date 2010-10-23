@@ -92,3 +92,15 @@ ACCOUNT_ACTIVATION_DAYS = 7
 
 if HISTORY_SUPPORT == True:
     INSTALLED_APPS = INSTALLED_APPS + ("fullhistory",)
+
+
+AUTHENTICATION_BACKENDS = (
+    'django_auth_ldap.backend.LDAPBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)
+import ldap
+from django_auth_ldap.config import LDAPSearch
+AUTH_LDAP_BIND_DN = ""
+AUTH_LDAP_BIND_PASSWORD = ""
+AUTH_LDAP_USER_SEARCH = LDAPSearch("ou=users,dc=example,dc=com",
+    ldap.SCOPE_SUBTREE, "(uid=%(user)s)")
