@@ -7,7 +7,6 @@ admin.autodiscover()
 urlpatterns = patterns('',
     # Example:
     (r'^accounts/', include('registration.backends.default.urls')),
-    url(r'^oauth/', include('oauth_provider.urls')),
     (r'^', include('main.urls')),
 
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
