@@ -28,6 +28,17 @@ General API Information
 The Imagery Index API is designed with REST in mind. At its core, each 
 resource has a representation as JSON.  
 
+Authentication
+--------------
+
+Requests to write to the database require authenticated requests. 
+Authentication is handled via basic auth; you must register for an
+account via the web interface first. 
+
+Once you have registered, simply use Basic Auth with your requests 
+to authenticate. If you do not send basic auth headers, you will 
+receive a 401 response.
+
 Errors
 ------
 

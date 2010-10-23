@@ -82,7 +82,7 @@ class WMS(models.Model):
     owner = models.ForeignKey(User)
     capabilities = models.TextField(blank=True, null=True)
     capabilities_date = models.DateTimeField(blank=True, null=True)
-    def from_json(self, data):
+    def from_json(self, data, user):
         required_keys = ['url', 'layer']
         optional_keys = ['capabilities']
         errors = []
@@ -99,7 +99,7 @@ class WMS(models.Model):
                 warnings.append("Missing %s in image data. This is a recommended field." % key)
         if errors:
             raise ApplicationError(errors)
-        self.owner = User.objects.get(pk=1)
+        self.owner = user
         self.capabilities_date = None
         self.save()
         return self
@@ -109,7 +109,7 @@ class WMS(models.Model):
             'id': self.id,
             'url': self.url,
             'layer': self.layer,
-            'owner': self.owner.id,
+            'user': self.owner.id,
         }
 
 class Image(models.Model):
@@ -129,7 +129,7 @@ class Image(models.Model):
     archive = models.BooleanField(default=True)
     owner = models.ForeignKey(User)
     history = HistoryField()
-    def from_json(self, data):
+    def from_json(self, data, user):
         required_keys = ['url', 'width', 'height']
         optional_keys = ['file_size', 'file_format', 'hash', 'crs', 'vrt', 'archive']
         errors = []
@@ -157,7 +157,7 @@ class Image(models.Model):
             self.license = License.objects.get(pk=data['license'])
         elif 'license' in data and isinstance(data['license'], dict):
              l = License()
-             l.from_json(data['license'])
+             l.from_json(data['license'], user)
              l.save()
              self.license = l
         elif not self.license:
@@ -165,7 +165,7 @@ class Image(models.Model):
         if errors:
             raise ApplicationError(errors)
         self.vrt_date = None
-        self.owner = User.objects.get(pk=1)
+        self.owner = user
         return self
     def to_json(self):
         return {
@@ -181,7 +181,8 @@ class Image(models.Model):
             'archive': self.archive,
             'license': self.license.to_json(),
             'vrt': self.vrt,
-            'vrt_date': self.vrt_date
+            'vrt_date': self.vrt_date,
+            'user': self.owner.id
         }    
 
 

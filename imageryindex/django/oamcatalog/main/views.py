@@ -25,17 +25,19 @@ def layer(request, id=None):
             
 @jsonexception
 def license(request, id=None):
-    if id == None and request.method == "POST":
+    @logged_in_or_basicauth()
+    def handle_update(request, license):
         data = simplejson.loads(request.raw_post_data)
+        license.from_json(data, request.user)
+        license.save()
+        return json_response(request, license)
+    if id == None and request.method == "POST":
         l = License()
-        l.from_json(data)
-        return json_response(request, l)
+        return handle_update(request, l)
     elif id != None:
         l = License.objects.get(pk=id)
         if request.method == "POST":
-            data = simplejson.loads(request.raw_post_data)
-            l.from_json(data)
-            l.save()
+            return handle_update(request, l)
         return json_response(request, l)
     else:
         licenses = License.objects.all()
@@ -47,18 +49,20 @@ def license(request, id=None):
 
 @jsonexception
 def image(request, id=None):
-    if id == None and request.method == "POST":
+    @logged_in_or_basicauth()
+    def handle_update(request, image):
         data = simplejson.loads(request.raw_post_data)
+        image.from_json(data, request.user)
+        image.save()
+        return json_response(request, image)
+        
+    if id == None and request.method == "POST":
         i = Image()
-        i.from_json(data)
-        i.save()
-        return json_response(request, i)
+        return handle_update(request,i)
     elif id != None:
         i = Image.objects.get(pk=id)
         if request.method == "POST":
-            data = simplejson.loads(request.raw_post_data)
-            i.from_json(data)
-            i.save()
+            return handle_update(request, i)
         return json_response(request, i)
     else:
         images = Image.objects.all()
