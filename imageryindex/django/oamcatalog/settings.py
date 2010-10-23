@@ -71,7 +71,7 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    'templates'
+    '/osgeo/oam/oam/imageryindex/django/oamcatalog/templates'
 )
 
 HISTORY_SUPPORT = True
@@ -98,9 +98,5 @@ AUTHENTICATION_BACKENDS = (
     'django_auth_ldap.backend.LDAPBackend',
     'django.contrib.auth.backends.ModelBackend',
 )
-import ldap
-from django_auth_ldap.config import LDAPSearch
-AUTH_LDAP_BIND_DN = ""
-AUTH_LDAP_BIND_PASSWORD = ""
-AUTH_LDAP_USER_SEARCH = LDAPSearch("ou=users,dc=example,dc=com",
-    ldap.SCOPE_SUBTREE, "(uid=%(user)s)")
+AUTH_LDAP_SERVER_URI = "ldaps://ldap.osgeo.org"
+AUTH_LDAP_USER_DN_TEMPLATE = "uid=%(user)s,ou=People,dc=osgeo,dc=org"

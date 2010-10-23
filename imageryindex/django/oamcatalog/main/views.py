@@ -28,7 +28,7 @@ def license(request, id=None):
     @logged_in_or_basicauth()
     def handle_update(request, license):
         data = simplejson.loads(request.raw_post_data)
-        license.from_json(data, request.user)
+        license.from_json(data)
         license.save()
         return json_response(request, license)
     if id == None and request.method == "POST":

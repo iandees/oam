@@ -157,7 +157,7 @@ class Image(models.Model):
             self.license = License.objects.get(pk=data['license'])
         elif 'license' in data and isinstance(data['license'], dict):
              l = License()
-             l.from_json(data['license'], user)
+             l.from_json(data['license'])
              l.save()
              self.license = l
         elif not self.license:
