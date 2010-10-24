@@ -1,10 +1,12 @@
+import os, tempfile, re, StringIO
 from xml.etree.elementtree import ElementTree
 try:
     from osgeo import gdal
-    gdal
+    gdal # pyflakes
 except ImportError:
     try:
         import gdal
+        gdal # pyflakes
     except ImportError:
         gdal = None
 
@@ -23,7 +25,7 @@ class Image(object):
         self.left, self.bottom, self.right, self.top = bbox
         self.width, self.height = kwargs["width"], kwargs["height"]
         for field in ("file_format", "crs", "vrt", "license"):
-            setattr(self, fields, kwargs.get(field))
+            setattr(self, field, kwargs.get(field))
         assert self.path
         assert self.left < self.right
         assert self.bottom < self.top
@@ -113,7 +115,7 @@ class Image(object):
             mode = gdal.GA_ReadOnly
         dataset = gdal.Open(path, mode)
         if dataset is None:
-            raise Exception("Cannot open %s" % filename)
+            raise Exception("Cannot open %s" % path)
         return dataset
 
     @classmethod
@@ -136,8 +138,7 @@ class Image(object):
             "crs": dataset.GetProjection(),
             "file_size": None,
             "hash": None,
-            "bbox": bbox,
-            "vrt": vrt
+            "bbox": bbox
         }
         # record["file_size"] = os.path.getsize(filename)
         # record["hash"] = compute_md5(filename)

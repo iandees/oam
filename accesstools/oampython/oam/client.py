@@ -1,4 +1,5 @@
-import sys, os, urllib, urllib2
+from image import Image
+import sys, urllib, urllib2
 try:
     import json
     json
@@ -68,7 +69,7 @@ class Client(object):
         return Image(**result)
 
     def images_by_bbox(self, bbox, **args):
-        endpoint = "image/?bbox=%f,%f,%f,%f" % tuple(opts.bbox)
+        endpoint = "image/?bbox=%f,%f,%f,%f" % tuple(bbox)
         result = self.request("GET", endpoint, args)
         if self.test and not result: return None
         images = []
@@ -78,4 +79,4 @@ class Client(object):
         return images
 
     def save_image(self, image):
-        return self.request("POST", "image/", content)
+        return self.request("POST", "image/", image.to_dict())
