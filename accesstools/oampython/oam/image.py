@@ -1,5 +1,10 @@
-import os, tempfile, re, StringIO
+import os, sys, tempfile, re, StringIO
 from xml.etree.elementtree import ElementTree
+try:
+    from hashlib import md5
+    md5 # pyflakes
+except ImportError:
+    from md5 import md5
 try:
     from osgeo import gdal
     gdal # pyflakes
@@ -105,6 +110,17 @@ class Image(object):
             idx = band.find("SimpleSource/SourceBand").text
             bands[interp] = [int(idx), props["DataType"], int(props["BlockXSize"]), int(props["BlockYSize"])]
         return bands
+
+    def compute_md5(self, blocksize=(1<<20)):
+        filesize = os.path.getsize(self.path)
+        f = file(self.path, "rb")
+        h = md5()
+        print >>sys.stderr, ""
+        for i in range(0, filesize, blocksize):
+            h.update(f.read(blocksize)) 
+            print >>sys.stderr, "\rComputing MD5... %d%%" % (float(i)/filesize*100),
+        print >>sys.stderr, "\rComputing MD5... done."
+        return h.hexdigest()
 
     @classmethod
     @requires_gdal

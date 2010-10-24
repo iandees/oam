@@ -1,6 +1,7 @@
-from client import *
-from image import *
 import optparse, os
+from client import Client, default_service
+from image import Image
+Image # pyflakes
 
 def option_parser():
     parser = optparse.OptionParser()
