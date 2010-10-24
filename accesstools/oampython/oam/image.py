@@ -1,5 +1,5 @@
 import os, tempfile, re, StringIO
-from xml.etree.elementtree import ElementTree
+from xml.etree.ElementTree import ElementTree
 try:
     from osgeo import gdal
     gdal # pyflakes

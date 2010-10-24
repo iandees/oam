@@ -2,8 +2,8 @@ from client import *
 from image import *
 import optparse, os
 
-def option_parser():
-    parser = optparse.OptionParser()
+def option_parser(usage=None):
+    parser = optparse.OptionParser(usage)
     parser.add_option("-U", "--username", dest="user", default=os.environ.get("OAM_USERNAME"), help="OAM username")
     parser.add_option("-P", "--password", dest="passwd", default=os.environ.get("OAM_PASSWORD"), help="OAM password")
     parser.add_option("-S", "--service", dest="service", help="OAM service base URL", default=default_service)
