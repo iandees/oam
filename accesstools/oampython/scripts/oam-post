@@ -1,0 +1,111 @@
+#!/usr/bin/env python
+
+import oam
+import sys, os, re, tempfile
+try:
+    from hashlib import md5
+    md5 # pyflakes
+except ImportError:
+    from md5 import md5
+
+def parse_options():
+    parser = oam.option_parser()
+    parser.add_option("-r", "--recursive", dest="recursive", action="store_true", default=False, help="Perform recursive HTTP/FTP indexing.")
+    parser.add_option("-c", "--license", dest="license", type="int", default=1, help="Redistribution license ID")
+    # parser.add_option("-l", "--layer", dest="layer", type="int", help="Layer ID")
+    parser.add_option("-u", "--url", dest="url", help="Image URL", default="")
+    (opts, args) = parser.parse_args()
+    opts.files = args
+    if len(opts.files) > 1 and not opts.url.endswith("/"):
+        raise Exception(
+            "URL must end with a / if multiple files are being stored")
+    opts.client = oam.build_client(opts)
+    return opts
+
+def compute_md5(filename,blocksize=(1<<20)):
+    filesize = os.path.getsize(filename)
+    f = file(filename, "rb")
+    h = md5()
+    print >>sys.stderr, ""
+    for i in range(0, filesize, blocksize):
+        h.update(f.read(blocksize)) 
+        print >>sys.stderr, "\rComputing MD5... %d%%" % (float(i)/filesize*100),
+    print >>sys.stderr, "\rComputing MD5... done."
+    return h.hexdigest()
+
+def post_description(client, url, opts):
+    image = oam.Image.load(url)
+    image.license = opts.license
+    if opts.url:
+        image.url = urlparse.urljoin(opts.url, url)
+    return client.save_image(image)
+
+def walk_path(path, opts):
+    pass
+
+href_match = re.compile(r'href="([^\.][^"]+)"', re.IGNORECASE)
+img_match = re.compile(r'\.(?:tiff?|jpe?g)$', re.IGNORECASE)
+dir_match = re.compile(r'/$')
+
+def scrape_http(content):
+    imgs = []
+    dirs = []
+    for href in href_match.findall(content):
+        if img_match.search(href):
+            imgs.append(href)
+        elif dir_match.search(href):
+            dirs.append(href)
+    return dirs, imgs
+
+def scrape_ftp(content):
+    imgs = []
+    dirs = []
+    for line in content.split("\n"):
+        fields = line.split()
+        perms, size, file = fields[0], fields[4], fields[8:]
+        if perms.startswith("d"):
+            dirs.append(file[0])
+        elif perms.startswith("l") and file[-1:].endswith("/"):
+            dirs.append(file[0])
+        elif img_match.search(href):
+            imgs.append(file[0])
+    return dirs, imgs
+            
+def spider(client, urls, opts):
+    queue = []
+    queue.extend(urls)
+    while queue:
+        item = queue.pop(0)
+        print >>sys.stderr, "<", item, 
+        req = urllib2.Request(item)
+        try:
+            response = urllib2.urlopen(req)
+        except IOError, e:
+            print >>sys.stderr, e
+            continue
+        result = response.read()
+        if item.startswith("http"):
+            subdirs, imgs = scrape_http(result)
+        else:
+            subdirs, imgs = scrape_ftp(result)
+        print >>sys.stderr, ":", len(subdirs), "subdirs /", len(imgs), "images"
+        for subdir in subdirs:
+            subdir = urlparse.urljoin(item, subdir)
+            if not subdir.startswith(item): continue
+            queue.append(subdir)
+        for url in imgs:
+            url = urlparse.urljoin(item, url)
+            if not url.startswith(item): continue
+            try:
+                post_description(client, url, opts)
+            except Exception, e:
+                print >>sys.stderr, e
+
+if __name__ == "__main__":
+    opts = parse_options()
+    if opts.recursive:
+        spider(client, opts.files, opts)
+    else:
+        for filename in opts.files:
+            record = post_description(client, filename, opts)
+            if record: print record
