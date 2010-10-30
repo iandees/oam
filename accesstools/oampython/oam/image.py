@@ -1,5 +1,10 @@
-import os, tempfile, re, StringIO
+import os, sys, tempfile, re, StringIO
 from xml.etree.ElementTree import ElementTree
+try:
+    from hashlib import md5
+    md5 # pyflakes
+except ImportError:
+    from md5 import md5
 try:
     from osgeo import gdal
     gdal # pyflakes
@@ -14,16 +19,16 @@ def requires_gdal(method):
     def f(*args, **kwargs):
         if not gdal:
             raise ImportError("Method %s requires GDAL Python." % method)
-        return method(*args, **method)
+        return method(*args, **kwargs)
     return f
 
 class Image(object):
-    __fields__ = ("path", "left", "bottom", "right", "top", "width", "height", "crs", "file_format", "license")
+    __fields__ = ("path", "left", "bottom", "right", "top", "width", "height", "crs", "file_format", "license", "vrt")
 
-    def __init__(self, url="", bbox=[], **kwargs):
+    def __init__(self, url="", bbox=[], width=0, height=0, **kwargs):
         self.path = url
         self.left, self.bottom, self.right, self.top = bbox
-        self.width, self.height = kwargs["width"], kwargs["height"]
+        self.width, self.height = width, height
         for field in ("file_format", "crs", "vrt", "license"):
             setattr(self, field, kwargs.get(field))
         assert self.path
@@ -38,7 +43,7 @@ class Image(object):
 
     @property
     def px_height(self):
-        return (self.top - self.bottom) / float(self.height)
+        return -(self.top - self.bottom) / float(self.height)
 
     @property
     def transform(self):
@@ -51,9 +56,9 @@ class Image(object):
     def window(self, (left, bottom, right, top)):
         """convert bbox to image pixel window"""
         xoff = int((left - self.left) / self.px_width + 0.0001)
-        yoff = int(-(top - self.top) / self.px_height + 0.0001)
+        yoff = int((top - self.top) / self.px_height + 0.0001)
         width = int((right - self.left) / self.px_width + 0.5) - xoff
-        height = int(-(bottom - self.top) / self.px_height + 0.5) - yoff
+        height = int((bottom - self.top) / self.px_height + 0.5) - yoff
         #if width < 1 or height < 1: return ()
         return (xoff, yoff, width, height)
 
@@ -76,8 +81,9 @@ class Image(object):
 
     def to_dict(self):
         data = dict((field, getattr(self, field)) for field in self.__fields__)
+        data["url"] = data.pop("path")
         data["bbox"] = [data.pop(field) for field in ("left", "bottom", "right", "top")]
-        data["hash"] = None
+        data["file_size"] = data["hash"] = None
         return data
 
     @requires_gdal
@@ -105,6 +111,17 @@ class Image(object):
             idx = band.find("SimpleSource/SourceBand").text
             bands[interp] = [int(idx), props["DataType"], int(props["BlockXSize"]), int(props["BlockYSize"])]
         return bands
+
+    def compute_md5(self, blocksize=(1<<20)):
+        filesize = os.path.getsize(self.path)
+        f = file(self.path, "rb")
+        h = md5()
+        print >>sys.stderr, ""
+        for i in range(0, filesize, blocksize):
+            h.update(f.read(blocksize)) 
+            print >>sys.stderr, "\rComputing MD5... %d%%" % (float(i)/filesize*100),
+        print >>sys.stderr, "\rComputing MD5... done."
+        return h.hexdigest()
 
     @classmethod
     @requires_gdal

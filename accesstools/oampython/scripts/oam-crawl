@@ -1,0 +1,77 @@
+#!/usr/bin/env python
+
+import oam
+import sys, re, urllib2, urlparse
+
+def parse_options():
+    parser = oam.option_parser()
+    parser.add_option("-c", "--license", dest="license", type="int", default=1, help="Redistribution license ID")
+    # parser.add_option("-l", "--layer", dest="layer", type="int", help="Layer ID")
+    (opts, args) = parser.parse_args()
+    opts.urls = args
+    return opts
+
+href_match = re.compile(r'href="([^\.][^"]+)"', re.IGNORECASE)
+img_match = re.compile(r'\.(?:tiff?|jpe?g)$', re.IGNORECASE)
+dir_match = re.compile(r'/$')
+
+def scrape_http(content):
+    imgs = []
+    dirs = []
+    for href in href_match.findall(content):
+        if img_match.search(href):
+            imgs.append(href)
+        elif dir_match.search(href):
+            dirs.append(href)
+    return dirs, imgs
+
+def scrape_ftp(content):
+    imgs = []
+    dirs = []
+    for line in content.split("\n"):
+        fields = line.split()
+        perms, size, filename = fields[0], fields[4], fields[8:]
+        if perms.startswith("d"):
+            dirs.append(filename[0])
+        elif perms.startswith("l") and file[-1:].endswith("/"):
+            dirs.append(filename[0])
+        elif img_match.search(filename[0]):
+            imgs.append(filename[0])
+    return dirs, imgs
+            
+def spider(urls, opts):
+    client = oam.build_client(opts)
+    queue = []
+    queue.extend(urls)
+    while queue:
+        item = queue.pop(0)
+        print >>sys.stderr, "<", item, 
+        req = urllib2.Request(item)
+        try:
+            response = urllib2.urlopen(req)
+        except IOError, e:
+            print >>sys.stderr, e
+            continue
+        result = response.read()
+        if item.startswith("http"):
+            subdirs, imgs = scrape_http(result)
+        else:
+            subdirs, imgs = scrape_ftp(result)
+        print >>sys.stderr, ":", len(subdirs), "subdirs /", len(imgs), "images"
+        for subdir in subdirs:
+            subdir = urlparse.urljoin(item, subdir)
+            if not subdir.startswith(item): continue
+            queue.append(subdir)
+        for url in imgs:
+            url = urlparse.urljoin(item, url)
+            if not url.startswith(item): continue
+            try:
+                image = oam.Image.load(url)
+                image.license = opts.license
+                client.save_image(image)
+            except Exception, e:
+                print >>sys.stderr, e
+
+if __name__ == "__main__":
+    opts = parse_options()
+    spider(opts.urls, opts)

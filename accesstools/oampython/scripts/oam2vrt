@@ -1,22 +1,10 @@
-import sys, os, optparse, urllib2, StringIO
+#!/usr/bin/python
+
 import oam
-from xml.etree.ElementTree import ElementTree
-try:
-    from osgeo import gdal
-    gdal
-except ImportError:
-    import gdal
-try:
-    import json
-    json
-except ImportError:
-    import simplejson as json
 
 def parse_options():
-    usage = "usage: %prog [options] output"
-    parser = oam.option_parser(usage)
-    parser.add_option("-l", "--layer", dest="layer", type="int", help="Layer ID")
-    parser.add_option("-i", "--image", dest="image", type="int", help="Image ID")
+    parser = oam.option_parser()
+    #parser.add_option("-l", "--layer", dest="layer", type="int", help="Layer ID")
     parser.add_option("-a", "--archive", dest="archive", action="store_true", default=False, help="Include archive images")
     parser.add_option("-r", "--resolution", dest="resolution", default="min", help="Resolution strategy (min|max|avg)")
     parser.add_option("-s", "--size", dest="size", help="Output VRT size in pixels (width,height)")
@@ -27,6 +15,17 @@ def parse_options():
     opts.output = args.pop(0)
     opts.bbox = oam.parse_bbox(args)
     return opts
+
+def determine_image_size(strategy, images, bbox):
+    if strategy == "min":
+       target_resolution = min([img.px_width for img in images])
+    elif strategy == "max":
+       target_resolution = max([img.px_width for img in images])
+    else: # avg
+       target_resolution = sum([img.px_width for img in images]) / len(images)
+    width = int((bbox[2] - bbox[0]) / target_resolution + 0.5)
+    height = int((bbox[3] - bbox[1]) / target_resolution + 0.5)
+    return width, height
 
 def write_vrt_source(output, target, source, band):
     overlap = source.intersection(target.bbox)
@@ -85,9 +84,11 @@ def write_vrt(target, sources):
 
     output.write('</VRTDataset>\n')
 
-if __name__ == "__main__":
-    opts = parse_options()
-    images = fetch_images(opts.bbox, opts)
+def main(opts):
+    client = oam.build_client(opts)
+    args = {}
+    if opts.archive: args["archive"] = "true"
+    images = client.images_by_bbox(opts.bbox, **args)
     if not images:
         raise Exception("No images found for that bounding box!")
     # verify that all images have the same SRS
@@ -97,14 +98,10 @@ if __name__ == "__main__":
     if opts.size:
         width, height = map(int, opts.size.split(","))
     else:
-        if opts.resolution == "min":
-           target_resolution = min([img.px_width for img in images])
-        elif opts.resolution == "max":
-           target_resolution = max([img.px_width for img in images])
-        else: # avg
-           target_resolution = sum([img.px_width for img in images]) / len(images)
-        width = int((opts.bbox[2] - opts.bbox[0]) / target_resolution + 0.5)
-        height = int((opts.bbox[3] - opts.bbox[1]) / target_resolution + 0.5)
-    target = Image(opts.output, opts.bbox, (width, height), images[0].crs) 
+        width, height = determine_image_size(opts.resolution, images, opts.bbox)
+    target = oam.Image(opts.output, opts.bbox, width=width, height=height, crs=images[0].crs) 
     # TODO: do something intelligent about masking/alpha band etc?
     write_vrt(target, images)
+
+if __name__ == "__main__":
+    main(parse_options())
