@@ -65,3 +65,25 @@ However, as the project grows, it is expected that this solution will
 grow untenable; as such, investigating fault-tolerant distributed
 storage options to help prevent this kind of failure will likely be a
 goal of the project.
+
+Imagery Hosts
++++++++++++++
+
+In order to provide stable image hosting for processed images for 
+organizations which can not provide their own, the OAM project works with
+a number of imagery hosts to provide stable homes.
+
+In general, such an imagery host supports image upload via FTP. To provide
+data to an imagery host node, you connect via provided connection details,
+and upload an image named based on the md5sum of the image contents, and 
+ending in .tif; as such, a TIFF image with an md5sum of d41d8cd98f00b204e9800998ecf8427e would be placed in the directory as 'd41d8cd98f00b204e9800998ecf8427e.tif'.
+
+Once you have uploaded the .tif, you should upload a .txt file with the same
+base name and ending in .txt (d41d8cd98f00b204e9800998ecf8427e.txt). This file
+should contain one line: "Email: address@example.com", the email address where
+you want the processing notifications for the image sent.
+
+Image hosting nodes will check that the image conforms to the guidelines
+above, and if so, will copy the image into place and send an email when
+complete containing information about the final location of the processed
+image.
