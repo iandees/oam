@@ -20,7 +20,7 @@ class Client(object):
         passwd_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
         passwd_mgr.add_password(None, self.service, user, password)
         handler = urllib2.HTTPBasicAuthHandler(passwd_mgr)
-        self.http_client = urllib2.build_opener(handler)
+        self.http = urllib2.build_opener(handler)
 
     def notify(self, msg, *args):
         if self.verbose:
@@ -47,7 +47,7 @@ class Client(object):
             self.debug(args)
             return None
         try:
-            response = self.http_client.open(req)
+            response = self.http.open(req)
         except IOError, e:
             if self.verbose: # avoid calling e.read()
                 self.debug("error: %s", e.read())
@@ -66,15 +66,19 @@ class Client(object):
         endpoint = "image/%d" % image_id
         result = self.request("GET", endpoint, args)
         if self.test and not result: return None
-        return Image(**result)
+        # JSON dict keys are unicode, which can't be used as function keyword args
+        opts = dict((str(key), val) for key, val in result.items())
+        return Image(**opts)
 
     def images_by_bbox(self, bbox, **args):
-        endpoint = "image/?bbox=%f,%f,%f,%f" % tuple(bbox)
-        result = self.request("GET", endpoint, args)
+        args["bbox"] = "%f,%f,%f,%f" % tuple(bbox)
+        result = self.request("GET", "image/", args)
         if self.test and not result: return None
         images = []
-        for obj in result["images"]:
-            image = Image(**obj)
+        for object in result["images"]:
+            # JSON dict keys are unicode, which can't be used as function keyword args
+            opts = dict((str(key), val) for key, val in object.items())
+            image = Image(**opts)
             images.append(image)
         return images
 
