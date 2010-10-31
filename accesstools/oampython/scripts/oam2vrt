@@ -9,6 +9,9 @@ def parse_options():
     parser.add_option("-r", "--resolution", dest="resolution", default="min", help="Resolution strategy (min|max|avg)")
     parser.add_option("-s", "--size", dest="size", help="Output VRT size in pixels (width,height)")
     (opts, args) = parser.parse_args()
+    if not len(args):
+        print parser.print_help()
+        sys.exit(0)
     opts.output = args.pop(0)
     opts.bbox = oam.parse_bbox(args)
     return opts
