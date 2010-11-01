@@ -1,5 +1,5 @@
 import optparse, os
-from client import Client, default_service
+from client import Client, ClientException, default_service
 from image import Image
 Image # pyflakes
 
@@ -15,7 +15,7 @@ def option_parser(usage=None):
 def parse_bbox(args):
     bbox = map(float, args)
     if len(bbox) != 4 or bbox[0] >= bbox[2] or bbox[1] >= bbox[3]:
-        raise Exception("You must provide a proper bounding box!")
+        raise ClientException("You must provide a proper bounding box!")
     return bbox
 
 def build_client(opts):

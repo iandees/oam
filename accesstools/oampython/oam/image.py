@@ -22,6 +22,9 @@ def requires_gdal(method):
         return method(*args, **kwargs)
     return f
 
+class ImageException(Exception):
+    pass
+
 class Image(object):
     __fields__ = ("path", "left", "bottom", "right", "top", "width", "height", "crs", "file_format", "license", "vrt")
 
@@ -132,7 +135,7 @@ class Image(object):
             mode = gdal.GA_ReadOnly
         dataset = gdal.Open(path, mode)
         if dataset is None:
-            raise Exception("Cannot open %s" % path)
+            raise ImageException("Cannot open %s" % path)
         return dataset
 
     @classmethod

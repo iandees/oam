@@ -8,6 +8,9 @@ except ImportError:
 
 default_service = 'http://oam.osgeo.org/api/'
 
+class ClientException(Exception):
+    pass
+
 class Client(object):
     def __init__(self, user, password, service=default_service, verbose=False, test=False, **kwargs):
         self.user = user
@@ -55,7 +58,7 @@ class Client(object):
         result = response.read()
         data = json.loads(result)
         if "error" in result:
-            raise Exception(result["error"])
+            raise ClientException(result["error"])
         self.debug("OK") 
         return data
 
