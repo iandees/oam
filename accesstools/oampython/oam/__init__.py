@@ -5,10 +5,10 @@ Image # pyflakes
 
 def option_parser(usage=None):
     parser = optparse.OptionParser(usage)
-    parser.add_option("-U", "--username", dest="user", default=os.environ.get("OAM_USERNAME"), help="OAM username")
-    parser.add_option("-P", "--password", dest="passwd", default=os.environ.get("OAM_PASSWORD"), help="OAM password")
+    parser.add_option("-U", "--username", dest="user", default=os.environ.get("OAM_USERNAME"), help="OAM username (defaults to $OAM_USERNAME)")
+    parser.add_option("-P", "--password", dest="passwd", default=os.environ.get("OAM_PASSWORD"), help="OAM password (defaults to $OAM_PASSWORD)")
     parser.add_option("-S", "--service", dest="service", help="OAM service base URL", default=default_service)
-    parser.add_option("-v", "--verbose", dest="verbose", action="store_true", default=False, help="verbose mode (dump HTTP errors)")
+    parser.add_option("-v", "--verbose", dest="verbose", action="store_true", default=False, help="Verbose mode (dump HTTP errors)")
     parser.add_option("-t", "--test", dest="test", action="store_true", default=False, help="Test mode (don't post to server)")
     return parser
 

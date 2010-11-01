@@ -31,7 +31,7 @@ class Client(object):
 
     def debug(self, msg, *args):
         if self.verbose:
-            self.notify(msg + "\n", args)
+            self.notify(msg + "\n", *args)
 
     def request(self, method, endpoint, args=""):
         url = self.service + endpoint
@@ -47,7 +47,7 @@ class Client(object):
             req = urllib2.Request(url)
         self.notify("%s %s", method, url)
         if self.test:
-            self.debug(args)
+            self.debug("%s", args)
             return None
         try:
             response = self.http.open(req)
