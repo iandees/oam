@@ -1,5 +1,5 @@
 from image import Image
-import sys, urllib, urllib2
+import sys, urllib, urllib2, base64
 try:
     import json
     json
@@ -20,10 +20,11 @@ class Client(object):
         self.test = test
         if not self.service.endswith("/"):
             self.service += "/"
-        passwd_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        passwd_mgr.add_password(None, self.service, user, password)
-        handler = urllib2.HTTPBasicAuthHandler(passwd_mgr)
-        self.http = urllib2.build_opener(handler)
+        #passwd_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        #passwd_mgr.add_password(None, self.service, user, password)
+        #handler = urllib2.HTTPBasicAuthHandler(passwd_mgr)
+        #self.http = urllib2.build_opener(handler)
+        self.http = urllib2.build_opener()
 
     def notify(self, msg, *args):
         if self.verbose:
@@ -46,13 +47,19 @@ class Client(object):
                 url += "?" + args
             req = urllib2.Request(url)
         self.notify("%s %s", method, url)
+
+        base64string = base64.encodestring(
+                '%s:%s' % (self.user, self.password))[:-1]
+        authheader =  "Basic %s" % base64string
+        req.add_header("Authorization", authheader)
+
         if self.test:
             self.debug("%s", args)
             return None
         try:
             response = self.http.open(req)
         except IOError, e:
-            if self.verbose: # avoid calling e.read()
+            if self.verbose and hasattr(e, "read"): # avoid calling e.read()
                 self.debug("error: %s", e.read())
             raise
         result = response.read()

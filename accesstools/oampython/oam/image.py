@@ -6,12 +6,12 @@ try:
 except ImportError:
     from md5 import md5
 try:
-    from osgeo import gdal
-    gdal # pyflakes
+    from osgeo import gdal, osr
+    gdal, osr # pyflakes
 except ImportError:
     try:
-        import gdal
-        gdal # pyflakes
+        import gdal, osr
+        gdal, osr # pyflakes
     except ImportError:
         gdal = None
 
@@ -22,16 +22,37 @@ def requires_gdal(method):
         return method(*args, **kwargs)
     return f
 
+def transform_bbox(source, target, (left, bottom, right, top)):
+    target_crs = osr.SpatialReference()
+    if isinstance(target, int):
+        target_crs.ImportFromEPSG(target)
+    else:
+        target_crs.ImportFromWkt(target)
+    source_crs = osr.SpatialReference()
+    if isinstance(source, int):
+        source_crs.ImportFromEPSG(source)
+    else:
+        source_crs.ImportFromWkt(source)
+    xform = osr.CoordinateTransformation(source_crs, target_crs)
+    corners = [xform.TransformPoint(*pt) for pt in ((left, bottom), (left, top), (right, bottom), (right, top))]
+    return [
+        min(pt[0] for pt in corners),
+        min(pt[1] for pt in corners),
+        max(pt[0] for pt in corners),
+        max(pt[1] for pt in corners)
+    ]
+
 class ImageException(Exception):
     pass
 
 class Image(object):
-    __fields__ = ("path", "left", "bottom", "right", "top", "width", "height", "crs", "file_format", "license", "vrt")
+    __fields__ = ("path", "left", "bottom", "right", "top", "width", "height", "crs", "file_format", "license", "vrt", "archive")
 
-    def __init__(self, url="", bbox=[], width=0, height=0, **kwargs):
+    def __init__(self, url="", bbox=[], width=0, height=0, archive=True, **kwargs):
         self.path = url
         self.left, self.bottom, self.right, self.top = bbox
         self.width, self.height = width, height
+        self.archive = archive
         for field in ("file_format", "crs", "vrt", "license"):
             setattr(self, field, kwargs.get(field))
         assert self.path
@@ -57,7 +78,8 @@ class Image(object):
         return (self.left, self.bottom, self.right, self.top)
 
     def window(self, (left, bottom, right, top)):
-        """convert bbox to image pixel window"""
+        """convert geographic bbox to image pixel window"""
+
         xoff = int((left - self.left) / self.px_width + 0.0001)
         yoff = int((top - self.top) / self.px_height + 0.0001)
         width = int((right - self.left) / self.px_width + 0.5) - xoff
@@ -93,12 +115,13 @@ class Image(object):
     def load_vrt(self, dataset=None):
         if not dataset:
             dataset = self.open(self.path)
-        _, tmp = tempfile.mkstemp()
+        fd, tmp = tempfile.mkstemp()
         try:
             gdal.GetDriverByName('VRT').CreateCopy(tmp, dataset)
             self.vrt = file(tmp).read()
         finally:
             os.unlink(tmp)
+            os.close(fd)
         return self.vrt
 
     @property
@@ -144,12 +167,13 @@ class Image(object):
         #self.notify("? %s ", url.split("/")[-1])
         dataset = cls.open(url)
         xform = dataset.GetGeoTransform()
-        bbox = [
+        left, bottom, right, top = (
            xform[0] + dataset.RasterYSize * xform[2],
            xform[3] + dataset.RasterYSize * xform[5],  
            xform[0] + dataset.RasterXSize * xform[1],
            xform[3] + dataset.RasterXSize * xform[4]
-        ]
+        )
+        bbox = transform_bbox(dataset.GetProjection(), 4326, (left, bottom, right, top))
         record = {
             "url": url,
             "file_format": dataset.GetDriver().ShortName,
