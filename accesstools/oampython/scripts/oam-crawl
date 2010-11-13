@@ -4,7 +4,8 @@ import oam
 import sys, re, urllib2, urlparse
 
 def parse_options():
-    parser = oam.option_parser()
+    parser = oam.option_parser("%prog [options] <URL> [<URL> ...]")
+    parser.add_option("-a", "--archive", dest="archive", action="store_true", default=False, help="Archival version")
     parser.add_option("-c", "--license", dest="license", type="int", default=1, help="Redistribution license ID")
     # parser.add_option("-l", "--layer", dest="layer", type="int", help="Layer ID")
     (opts, args) = parser.parse_args()
@@ -68,6 +69,8 @@ def spider(urls, opts):
             try:
                 image = oam.Image.load(url)
                 image.license = opts.license
+                image.archive = not opts.archive
+                print >>sys.stderr, "+", url
                 client.save_image(image)
             except Exception, e:
                 print >>sys.stderr, e

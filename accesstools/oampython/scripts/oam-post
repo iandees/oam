@@ -4,12 +4,13 @@ import oam
 import urlparse
 
 def parse_options():
-    parser = oam.option_parser()
+    parser = oam.option_parser("%prog [options] <URL> <files>")
     parser.add_option("-c", "--license", dest="license", type="int", default=1, help="Redistribution license ID")
     # parser.add_option("-l", "--layer", dest="layer", type="int", help="Layer ID")
-    parser.add_option("-u", "--url", dest="url", help="Image URL", default="", required=True)
+    # parser.add_option("-u", "--url", dest="url", help="Image URL", required=True)
     (opts, args) = parser.parse_args()
-    opts.files = args
+    opts.url = args[0]
+    opts.files = args[1:]
     if len(opts.files) > 1 and not opts.url.endswith("/"):
         raise Exception(
             "URL must end with a / if multiple files are being stored")
