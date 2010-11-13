@@ -117,7 +117,7 @@ class Image(models.Model):
     layer = models.ForeignKey(Layer, blank=True, null=True)
     file_size = models.IntegerField(blank=True,null=True)
     file_format = models.CharField(max_length=255, blank=True,null=True)
-    crs = models.CharField(max_length=100, blank=True, null=True)
+    crs = models.TextField(blank=True,null=True)
     bbox = models.PolygonField()
     width = models.IntegerField()
     height = models.IntegerField()

@@ -75,7 +75,7 @@ def image(request, id=None):
             limited_images = []
             left, bottom, right, top = map(float, request.GET['bbox'].split(","))
             for image in images:
-                ileft, ibottom, iright, itop = map(float, image.bbox.split(","))
+                ileft, ibottom, iright, itop = image.bbox.extent
                 inbottom = (((ibottom >= bottom) and (ibottom <= top)) or ((bottom >= ibottom) and (bottom <= itop)))
                 intop = (((itop >= bottom) and (itop <= top)) or ((top > ibottom) and (top < itop)))
                 inleft = (((ileft >= left) and (ileft <= right)) or ((left >= ileft) and (left <= iright)))

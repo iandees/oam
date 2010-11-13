@@ -133,7 +133,7 @@ def json_response(request, obj):
     if request.GET.has_key('_sqldebug'):
         import django.db
         obj['sql'] = django.db.connection.queries
-    data = simplejson.dumps(obj)
+    data = simplejson.dumps(obj, indent=2)
     if request.GET.has_key('callback'):
         data = "%s(%s);" % (request.GET['callback'], data)
     elif request.GET.has_key('handler'):
@@ -141,6 +141,7 @@ def json_response(request, obj):
     
     r = HttpResponse(data)
     r['Access-Control-Allow-Origin'] = "*"
+    r['Content-Type'] = "application/json"
     return r
 
 def view_or_basicauth(view, request, test_func, realm = "", *args, **kwargs):
