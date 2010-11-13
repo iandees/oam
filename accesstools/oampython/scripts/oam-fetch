@@ -4,31 +4,38 @@ import sys, os
 import urlgrabber, urlgrabber.progress
 import oam
 
-def fetch_image_files(layer, opts):
-    if opts.layer:
-        path = str(opts.layer)
-        if not opts.test and not os.path.isdir(path):
-            os.makedirs(path)
-    else:
-        path = "."
-    for image in layer["images"]:
-        filetype = image["url"].split(".")[-1]
-        target = os.path.join(path, image["hash"] + "." + filetype)
-        if opts.test:
-            print >>sys.stderr, image["url"], "->", target
-        else:
+def fetch_image_files(client, bbox, opts):
+    # if opts.layer:
+    #    path = str(opts.layer)
+    #    if not opts.test and not os.path.isdir(path):
+    #        os.makedirs(path)
+    # else:
+    files = []
+    args = {"archive":"true"} if opts.source else {}
+    for image in client.images_by_bbox(bbox, **args):
+        target = image.path.split("/")[-1]
+        if opts.dest:
             meter = urlgrabber.progress.text_progress_meter()
-            urlgrabber.urlgrab(image["url"], target, progress_obj=meter)
+            target = os.path.join(opts.dest, target)
+            print >>sys.stderr, image.path, "->", target
+            urlgrabber.urlgrab(str(image.path), target, progress_obj=meter)
+        else:
+            print >>sys.stderr, image.path, "->", target
+        files.append(target)
+    return files
 
-def run_gdalbuildvrt(opts):
-    layer_id = str(opts.layer)
-    glob = os.path.join(layer_id, "*.*")
-    os.system("gdalbuildvrt %s.vrt %s" % (layer_id, glob))
+def run_gdalbuildvrt(files, opts):
+    #glob = os.path.join(opts.path, "*.*")
+    os.system("gdalbuildvrt %s %s" % (opts.vrt, " ".join(files)))
 
 if __name__ == "__main__":
-    parser = oam.parse_options()
+    parser = oam.option_parser("%prog [options] <west> <south> <east> <north>")
+    parser.add_option("-s", "--source", dest="source", action="store_true", default=None, help="Include raw imagery sources")
+    parser.add_option("-o", "--output", dest="vrt", default=None, help="Output VRT filename")
+    parser.add_option("-d", "--destination", dest="dest", default=None, help="Destination directory for image downloads")
     opts, args = parser.parse_args()
     bbox = oam.parse_bbox(args)
     client = oam.build_client(opts)
-    fetch_image_files(client, bbox, opts)
-    run_gdalbuildvrt(opts)
+    # oddly, we have to disable test mode for this script to do anything sensible.
+    files = fetch_image_files(client, bbox, opts)
+    if opts.vrt and files: run_gdalbuildvrt(files, opts)
