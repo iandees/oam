@@ -13,6 +13,25 @@ class ClientException(Exception):
 
 class Client(object):
     def __init__(self, user, password, service=default_service, verbose=False, test=False, **kwargs):
+        """ Client for OAM index.
+        
+            Arguments:
+            
+              user:
+                Username for index basic auth, assigned to self.user but currently unused.
+              
+              password:
+                Password for index basic auth, assigned to self.password but currently unused.
+              
+              service:
+                Base URL of OAM index, assigned to self.service, defaults to http://oam.osgeo.org/api/.
+              
+              verbose:
+                Boolean flag for chattiness, assigned to self.verbose.
+              
+              test:
+                Boolean flag for testiness, assigned to self.test.
+        """
         self.user = user
         self.password = password
         self.service = service
