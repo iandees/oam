@@ -1,5 +1,10 @@
 """ In-progress TileStache provider for OpenAerialMap.
 
+TODO:
+    - stop using hard-coded junk username/password in oam.Client constructor.
+    - add archive server blacklist and whitelist.
+    - enforce jpg tiles and spherical mercator projection?
+
 Example configuration file:
 
     {
@@ -21,9 +26,9 @@ from tempfile import mkstemp
 from os import close, unlink
 from xml.dom.minidom import getDOMImplementation
 
+import oam
 import PIL.Image
 
-from oam import Client as oamClient, Image as oamImage
 from ModestMaps.Core import Point
 
 try:
@@ -37,28 +42,30 @@ class Provider:
     
     def __init__(self, layer):
         self.layer = layer
-        self.client = oamClient('username', 'password')
+        self.client = oam.Client('username', 'password')
 
     def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, zoom):
     
         garbage = []
         
         try:
+            # Figure out bbox and contained images -----------------------------
+            
             sw = self.layer.projection.projLocation(Point(xmin, ymin))
             ne = self.layer.projection.projLocation(Point(xmax, ymax))
             
             bbox = sw.lon, sw.lat, ne.lon, ne.lat
             images = self.client.images_by_bbox(bbox)
             
-            #
+            # Set up a target oam.Image ----------------------------------------
             
             handle, junkpath = mkstemp(prefix='oamtiles-', suffix='.vrt')
             garbage.append(junkpath)
             close(handle)
             
-            target = oamImage(junkpath, bbox, width, height, crs=images[0].crs)
+            target = oam.Image(junkpath, bbox, width, height, crs=images[0].crs)
             
-            #
+            # Build input gdal datasource --------------------------------------
             
             vrtdoc = build_vrt(target, images)
 
@@ -75,7 +82,7 @@ class Provider:
             assert source_ds, \
                 "oam.tiles.Provider couldn't open the file: %s" % vrtpath
             
-            #
+            # Prepare output gdal datasource -----------------------------------
         
             handle, areapath = mkstemp(prefix='oamtiles-', suffix='.tif')
             garbage.append(areapath)
@@ -91,24 +98,26 @@ class Provider:
             merc.ImportFromProj4(srs)
             destination_ds.SetProjection(merc.ExportToWkt())
     
+            # note that 900913 points north and east
             x, y = xmin, ymax
-            w, h = xmax - xmin, ymin - ymax # because 900913 points up
+            w, h = xmax - xmin, ymin - ymax
             
             gtx = [x, w/width, 0, y, 0, h/height]
             destination_ds.SetGeoTransform(gtx)
             
-            #
+            # Create rendered area ---------------------------------------------
             
             gdal.ReprojectImage(source_ds, destination_ds)
             
             r, g, b = [destination_ds.GetRasterBand(i).ReadRaster(0, 0, width, height) for i in (1, 2, 3)]
             data = ''.join([''.join(pixel) for pixel in zip(r, g, b)])
-            
-            return PIL.Image.fromstring('RGB', (width, height), data)
+            area = PIL.Image.fromstring('RGB', (width, height), data)
     
         finally:
             for filename in garbage:
                 unlink(filename)
+
+        return area
 
 def build_vrt(target, images):
     """
@@ -116,15 +125,12 @@ def build_vrt(target, images):
     impl = getDOMImplementation()
     doc = impl.createDocument(None, 'VRTDataset', None)
     
-    ds = doc.documentElement
-    
-    ds.setAttribute('rasterXSize', str(target.width))
-    ds.setAttribute('rasterYSize', str(target.height))
+    root = doc.documentElement
+    root.setAttribute('rasterXSize', str(target.width))
+    root.setAttribute('rasterYSize', str(target.height))
     
     gt = doc.createElement('GeoTransform')
     gt.appendChild(doc.createTextNode(', '.join(['%.16f' % x for x in target.transform])))
-    
-    ds.appendChild(gt)
     
     lonlat = osr.SpatialReference()
     lonlat.ImportFromProj4('+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
@@ -132,7 +138,8 @@ def build_vrt(target, images):
     srs = doc.createElement('SRS')
     srs.appendChild(doc.createTextNode(lonlat.ExportToWkt()))
     
-    ds.appendChild(srs)
+    root.appendChild(gt)
+    root.appendChild(srs)
     
     for (band, interp) in zip((1, 2, 3), ('Red', 'Green', 'Blue')):
     
@@ -144,7 +151,7 @@ def build_vrt(target, images):
         ci.appendChild(doc.createTextNode(interp))
 
         rb.appendChild(ci)
-        ds.appendChild(rb)
+        root.appendChild(rb)
         
         for image in images:
         
