@@ -3,7 +3,7 @@
 TODO:
     - stop using hard-coded junk username/password in oam.Client constructor.
     - add archive server blacklist and whitelist.
-    - enforce jpg tiles and spherical mercator projection?
+    - enforce spherical mercator projection?
     - allow for local cache of big remote files
 
 Example configuration file:
@@ -33,6 +33,7 @@ import oam
 import PIL.Image
 
 from ModestMaps.Core import Point
+from TileStache.Core import KnownUnknown
 
 try:
     from osgeo import gdal
@@ -122,6 +123,14 @@ class Provider:
                 unlink(filename)
 
         return area
+    
+    def getTypeByExtension(self, extension):
+        """ Return (image/jpeg, JPEG) for extension "jpg", throw error for anything else.
+        """
+        if extension == 'jpg':
+            return ('image/jpeg', 'JPEG')
+
+        raise KnownUnknown('oam.tiles.Provider only wants to make "jpg" tiles, not "%s"' % extension)
 
 def localize_image_path(image):
     """ Currently a no-op, this function is a placeholder for locally caching remote files.
