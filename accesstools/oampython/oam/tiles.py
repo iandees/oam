@@ -4,6 +4,7 @@ TODO:
     - stop using hard-coded junk username/password in oam.Client constructor.
     - add archive server blacklist and whitelist.
     - enforce jpg tiles and spherical mercator projection?
+    - allow for local cache of big remote files
 
 Example configuration file:
 
@@ -24,6 +25,8 @@ Read more about TileStache and its configuration here:
 """
 from tempfile import mkstemp
 from os import close, unlink
+from urlparse import urljoin
+from copy import deepcopy
 from xml.dom.minidom import getDOMImplementation
 
 import oam
@@ -56,6 +59,7 @@ class Provider:
             
             bbox = sw.lon, sw.lat, ne.lon, ne.lat
             images = self.client.images_by_bbox(bbox)
+            images = map(localize_image_path, images)
             
             # Set up a target oam.Image ----------------------------------------
             
@@ -119,8 +123,15 @@ class Provider:
 
         return area
 
-def build_vrt(target, images):
+def localize_image_path(image):
+    """ Currently a no-op, this function is a placeholder for locally caching remote files.
     """
+    return deepcopy(image)
+
+def build_vrt(target, images):
+    """ Make an XML DOM representing a VRT.
+    
+        Use a target image and a collection of source images to mosaic.
     """
     impl = getDOMImplementation()
     doc = impl.createDocument(None, 'VRTDataset', None)
