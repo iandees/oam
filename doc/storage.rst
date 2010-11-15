@@ -8,8 +8,8 @@ indexing it in the OpenAerialMap imagery index.
 
 .. _optimized:
 
-OpenAerialMap Optimized Image
-+++++++++++++++++++++++++++++
+OpenAerialMap Archive Image
++++++++++++++++++++++++++++
 
 In order to make OAM images easy to access for remote clients, the OAM
 project is looking to have processed images fulfill a certain set of 
@@ -25,7 +25,7 @@ Generally, what this means is that the image is:
   without reading the entire image.
 * Uses YCbCr JPEG compression at quality setting 75
 
-Processed images will be read by the OpenAerialMap server to gather additional
+Archive images will be read by the OpenAerialMap server to gather additional
 metadata -- the metadata of the file is presumed to override the metadata
 passed in by a user, where available.
 

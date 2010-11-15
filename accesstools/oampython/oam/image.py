@@ -49,6 +49,34 @@ class Image(object):
     __fields__ = ("path", "left", "bottom", "right", "top", "width", "height", "crs", "file_format", "license", "vrt", "archive")
 
     def __init__(self, url="", bbox=[], width=0, height=0, archive=True, **kwargs):
+        """ OAM archive image or synthetic mosaic.
+        
+            Arguments:
+            
+              url:
+                URL of image, assigned to self.path.
+              
+              bbox:
+                Geographic bounds, assigned to self.left, bottom, right, top.
+              
+              width:
+                Width in pixels, assigned to self.width.
+              
+              height:
+                Height in pixels, assigned to self.height.
+              
+              archive:
+                Boolean mumble mumble, apparently unused, defaults to True.
+              
+              file_format:
+                Used in gdal DataSet.GetDriver(), assigned to self.file_format.
+              
+              crs:
+                Coordinate reference system in WKT, assigned to self.crs.
+              
+              vrt:
+                String representation of VRT file for gdal, assigned to self.vrt.
+        """
         self.path = url
         self.left, self.bottom, self.right, self.top = bbox
         self.width, self.height = width, height
