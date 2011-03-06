@@ -28,9 +28,16 @@ def license(request, id=None):
     @logged_in_or_basicauth()
     def handle_update(request, license):
         data = simplejson.loads(request.raw_post_data)
+        warnings = []
+        if not license.id:
+            if 'url' in data:
+                ls = License.objects.filter(url=data['url'])
+                if ls.count():
+                    license = ls[0]
+                    warnings.append("URL of license matched existing license %s; updating that license instead of creating a new license." % ls[0].id) 
         license.from_json(data)
         license.save()
-        return json_response(request, license)
+        return json_response(request, license, warnings=warnings)
     if id == None and request.method == "POST":
         l = License()
         return handle_update(request, l)

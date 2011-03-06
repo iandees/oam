@@ -122,7 +122,7 @@ def jsonexception(func):
             return generate_error_response(E, format="json", request=request, unexpected=True)
     return wrap        
 
-def json_response(request, obj):
+def json_response(request, obj, warnings=None, errors=None):
     """Take an object. If the object has a to_json method, call it, 
        and take either the result or the original object and serialize
        it using simplejson. If a callbakc was sent with the http_request,
@@ -133,6 +133,8 @@ def json_response(request, obj):
     if request.GET.has_key('_sqldebug'):
         import django.db
         obj['sql'] = django.db.connection.queries
+    if warnings:
+        obj['warnings'] = warnings
     data = simplejson.dumps(obj, indent=2)
     if request.GET.has_key('callback'):
         data = "%s(%s);" % (request.GET['callback'], data)

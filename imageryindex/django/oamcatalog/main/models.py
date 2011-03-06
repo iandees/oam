@@ -21,6 +21,10 @@ class License(models.Model):
     flaglist = ['noncommercial', 'attribution', 'sharealike']
     history = HistoryField()
     def from_json(self, data):
+        if 'url' in data:
+            ls = License.objects.filter(url=data['url'])
+            if ls.count():
+                return ls[0]
         errors = []
         for key in ['name', 'url', 'restrictions', 'url']:
             setattr(self, key, data.get(key, ''))
@@ -51,6 +55,8 @@ class License(models.Model):
 
 class Attribution(models.Model):
     attribution = models.TextField()
+    def to_json(self):
+        return self.attribution
 
 class Layer(models.Model):
     name = models.CharField(max_length=255)
@@ -162,13 +168,19 @@ class Image(models.Model):
              self.license = l
         elif not self.license:
             errors.append("Some license information is required.")
+        if 'attribution' in data:
+            a, created = Attribution.objects.get_or_create(attribution=data['attribution'])
+            a.save()
+            self.attribution = a
+        if self.license.attribution and not self.attribution:
+            errors.append("Attribution is required when using %s (ID: %s)" % (self.license.name, self.license.id))
         if errors:
             raise ApplicationError(errors)
         self.vrt_date = None
         self.owner = user
         return self
     def to_json(self):
-        return {
+        data = {
             'id': self.id,
             'url': self.url,
             'file_size': self.file_size,
@@ -184,6 +196,9 @@ class Image(models.Model):
             'vrt_date': self.vrt_date,
             'user': self.owner.id
         }    
+        if self.attribution:
+            data['attribution'] = self.attribution.to_json()
+        return data    
 
 
 if history_support:
