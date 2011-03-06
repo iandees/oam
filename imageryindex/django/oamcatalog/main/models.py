@@ -155,8 +155,15 @@ class Image(models.Model):
                 setattr(self, key, data[key])
             else:
                 warnings.append("Missing %s in image data. This is a recommended field." % key)
-        if 'layer' in data:
-            errors.append("No layer handling available at this time. Please upload images without a Layer identifier.")
+        self.save()        
+        if 'layers' in data:
+            self.layers.clear()    
+            for layer in data['layers']:
+                if not isinstance(layer, int):
+                    errors.append("Layers must be int objects (not %s)" % type(layer))
+                    break
+                la = Layer.objects.get(pk=layer)
+                self.layers.add(la)
         if 'bbox' in data:
             geom = Polygon.from_bbox(data['bbox'])
             self.bbox = geom
@@ -199,7 +206,8 @@ class Image(models.Model):
             'license': self.license.to_json(),
             'vrt': self.vrt,
             'vrt_date': self.vrt_date,
-            'user': self.owner.id
+            'user': self.owner.id,
+            'layers': [l.id for l in self.layers.all()]
         }    
         if self.attribution:
             data['attribution'] = self.attribution.to_json()
