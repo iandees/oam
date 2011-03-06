@@ -5,12 +5,13 @@ from main.models import Layer, Image, User, License
 from main.helpers import *
 from django.shortcuts import render_to_response
 
+@logged_in_or_basicauth()
 @jsonexception
 def layer(request, id=None):
     if id == None and request.method == "POST":
         data = simplejson.loads(request.raw_post_data)
         l = Layer()
-        l.from_json(data)
+        l.from_json(data, request.user)
         return json_response(request, l)
     elif id != None and id != "all":
         l = Layer.objects.get(pk=id)
@@ -22,7 +23,15 @@ def layer(request, id=None):
             ]
         }    
         return json_response(request, data)
-            
+
+#@logged_in_or_basicauth()
+#def layer_add_images(request, id):
+#    if request.method != "POST":
+#        raise ApplicationError(['Can only add images via POST'])
+#    layer = Layer.objects.get(pk=id)
+#    data = 
+#    layer.image_set.add 
+
 @jsonexception
 def license(request, id=None):
     @logged_in_or_basicauth()

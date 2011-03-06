@@ -63,11 +63,17 @@ class Layer(models.Model):
     description = models.TextField()
     owner = models.ForeignKey(User)
     date = models.DateTimeField(blank=True, null=True)
-    attribution = models.ForeignKey(Attribution)
-    def from_json(self, data):
+    def from_json(self, data, user):
         self.name = data['name']
         self.description = data['description']
-        self.owner = User.objects.get(pk=data['user'])
+        self.owner = user
+        self.save()
+        for image in data['images']:
+            if isinstance(image, int):
+                im = Image.objects.get(pk=image)
+                self.image_set.add(im)
+            else:
+                raise ApplicationError(["Image array objects must be ints (not %s)" % type(image)])
         self.save()
         return self
 
@@ -77,8 +83,7 @@ class Layer(models.Model):
             'name': self.name,
             'description': self.description,
             'owner': self.owner.id,
-            'attribution': self.attribution.to_json(),
-            'images': [i.to_json() for i in self.image_set.all()]
+            'images': [i.id for i in self.image_set.all()]
         }    
 
 class WMS(models.Model):
@@ -120,7 +125,7 @@ class WMS(models.Model):
 
 class Image(models.Model):
     url = models.TextField()
-    layer = models.ForeignKey(Layer, blank=True, null=True)
+    layers = models.ManyToManyField(Layer, blank=True, null=True)
     file_size = models.IntegerField(blank=True,null=True)
     file_format = models.CharField(max_length=255, blank=True,null=True)
     crs = models.TextField(blank=True,null=True)
