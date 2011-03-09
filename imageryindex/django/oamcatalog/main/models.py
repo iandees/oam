@@ -155,15 +155,7 @@ class Image(models.Model):
                 setattr(self, key, data[key])
             else:
                 warnings.append("Missing %s in image data. This is a recommended field." % key)
-        self.save()        
-        if 'layers' in data:
-            self.layers.clear()    
-            for layer in data['layers']:
-                if not isinstance(layer, int):
-                    errors.append("Layers must be int objects (not %s)" % type(layer))
-                    break
-                la = Layer.objects.get(pk=layer)
-                self.layers.add(la)
+        self.owner = user
         if 'bbox' in data:
             geom = Polygon.from_bbox(data['bbox'])
             self.bbox = geom
@@ -188,8 +180,16 @@ class Image(models.Model):
             errors.append("Attribution is required when using %s (ID: %s)" % (self.license.name, self.license.id))
         if errors:
             raise ApplicationError(errors)
+        self.save()        
+        if 'layers' in data:
+            self.layers.clear()    
+            for layer in data['layers']:
+                if not isinstance(layer, int):
+                    errors.append("Layers must be int objects (not %s)" % type(layer))
+                    break
+                la = Layer.objects.get(pk=layer)
+                self.layers.add(la)
         self.vrt_date = None
-        self.owner = user
         return self
     def to_json(self):
         data = {
