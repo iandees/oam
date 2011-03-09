@@ -46,7 +46,7 @@ class ImageException(Exception):
     pass
 
 class Image(object):
-    __fields__ = ("path", "left", "bottom", "right", "top", "width", "height", "crs", "file_format", "license", "vrt", "archive")
+    __fields__ = ("path", "left", "bottom", "right", "top", "width", "height", "crs", "file_format", "license", "vrt", "archive", "url", "layers")
 
     def __init__(self, url="", bbox=[], width=0, height=0, archive=True, **kwargs):
         """ OAM archive image or synthetic mosaic.
@@ -81,7 +81,7 @@ class Image(object):
         self.left, self.bottom, self.right, self.top = bbox
         self.width, self.height = width, height
         self.archive = archive
-        for field in ("file_format", "crs", "vrt", "license"):
+        for field in ("file_format", "crs", "vrt", "license", "layers"):
             setattr(self, field, kwargs.get(field))
         assert self.path
         assert self.left < self.right
@@ -134,7 +134,10 @@ class Image(object):
 
     def to_dict(self):
         data = dict((field, getattr(self, field)) for field in self.__fields__)
-        data["url"] = data.pop("path")
+        if not 'url' in data and 'path' in data:
+            data["url"] = data.pop("path")
+        if 'layers' in data and data['layers'] and not isinstance('layers', list):
+            data['layers'] = [data['layers']]
         data["bbox"] = [data.pop(field) for field in ("left", "bottom", "right", "top")]
         data["file_size"] = data["hash"] = None
         return data
