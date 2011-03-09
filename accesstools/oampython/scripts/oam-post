@@ -2,11 +2,12 @@
 
 import oam
 import urlparse
+import os.path
 
 def parse_options():
     parser = oam.option_parser("%prog [options] <URL> <files>")
     parser.add_option("-c", "--license", dest="license", type="int", default=1, help="Redistribution license ID")
-    # parser.add_option("-l", "--layer", dest="layer", type="int", help="Layer ID")
+    parser.add_option("-l", "--layer", dest="layers", type="int", help="Layer ID")
     # parser.add_option("-u", "--url", dest="url", help="Image URL", required=True)
     (opts, args) = parser.parse_args()
     opts.url = args[0]
@@ -19,7 +20,9 @@ def parse_options():
 def post_description(client, path, opts):
     image = oam.Image.load(path)
     image.license = opts.license
-    image.url = urlparse.urljoin(opts.url, path)
+    path_parts = os.path.split(path)
+    image.layers = opts.layers
+    image.url = urlparse.urljoin(opts.url, path_parts[-1])
     return client.save_image(image)
 
 def walk_path(client, path, opts):
