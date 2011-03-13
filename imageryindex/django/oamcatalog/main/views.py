@@ -24,14 +24,6 @@ def layer(request, id=None):
         }    
         return json_response(request, data)
 
-#@logged_in_or_basicauth()
-#def layer_add_images(request, id):
-#    if request.method != "POST":
-#        raise ApplicationError(['Can only add images via POST'])
-#    layer = Layer.objects.get(pk=id)
-#    data = 
-#    layer.image_set.add 
-
 @jsonexception
 def license(request, id=None):
     @logged_in_or_basicauth()
@@ -114,6 +106,7 @@ def image(request, id=None):
         return json_response(request, i)
     else:
         images = Image.objects.all()
+        output = request.GET.get('output', 'simple')
         if 'archive' in request.GET and request.GET['archive'].lower() in ("true", "t", "1"):
             images = images.filter(archive=True)
         else:
@@ -132,7 +125,7 @@ def image(request, id=None):
                 if intersects: 
                     limited_images.append(image)
         data = {'images': [
-            i.to_json() for i in limited_images
+            i.to_json(output=output) for i in limited_images
             ]
         }   
         return json_response(request, data)
