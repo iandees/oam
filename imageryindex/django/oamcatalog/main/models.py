@@ -193,21 +193,18 @@ class Image(models.Model):
                 self.layers.add(la)
         self.vrt_date = None
         return self
-    def to_json(self):
+    def to_json(self, output='full'):
         data = {
             'id': self.id,
             'source_url': self.url,
             'file_size': self.file_size,
             'file_format': self.file_format,
-            'crs': self.crs,
             'bbox': list(self.bbox.extent),
             'width': self.width,
             'height': self.height,
             'hash': self.hash,
             'archive': self.archive,
             'license': self.license.to_json(),
-            'vrt': self.vrt,
-            'vrt_date': self.vrt_date,
             'user': self.owner.id,
             'layers': [l.id for l in self.layers.all()]
         }
@@ -217,6 +214,10 @@ class Image(models.Model):
         data['urls'] = urls
         if self.attribution:
             data['attribution'] = self.attribution.to_json()
+        if output == "full":    
+            data['vrt'] = self.vrt
+            data['vrt_date'] =  self.vrt_date
+            data['crs'] = self.crs
         return data    
 
 class Mirror(models.Model):
