@@ -54,7 +54,7 @@ def license(request, id=None):
         l = License.objects.get(pk=id)
         if request.method == "DELETE":
             l.delete()
-            return json_response("")
+            return json_response(request, "")
         if request.method == "POST":
             return handle_update(request, l)
         return json_response(request, l)
@@ -81,7 +81,7 @@ def mirror(request, id=None):
         m = Mirror.objects.get(pk=id)
         if request.method == "DELETE":
             m.delete()
-            return json_response("")
+            return json_response(request, "")
         elif request.method == "POST":
             return handle_update(request, m)
         return json_response(request, m)
@@ -108,7 +108,7 @@ def image(request, id=None):
         i = Image.objects.get(pk=id)
         if request.method == "DELETE":
             i.delete()
-            return json_response("")
+            return json_response(request, "")
         elif request.method == "POST":
             return handle_update(request, i)
         return json_response(request, i)
