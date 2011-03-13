@@ -141,6 +141,8 @@ class Image(models.Model):
     owner = models.ForeignKey(User)
     history = HistoryField()
     def from_json(self, data, user):
+        if 'source_url' in data:
+            data['url'] = data['source_url']
         required_keys = ['url', 'width', 'height']
         optional_keys = ['file_size', 'file_format', 'hash', 'crs', 'vrt', 'archive']
         errors = []
