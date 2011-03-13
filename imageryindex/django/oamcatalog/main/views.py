@@ -1,7 +1,7 @@
 # Create your views here.
 from django.http import HttpResponse
 import simplejson
-from main.models import Layer, Image, User, License
+from main.models import Layer, Image, User, License, Mirror
 from main.helpers import *
 from django.shortcuts import render_to_response
 
@@ -52,6 +52,9 @@ def license(request, id=None):
         return handle_update(request, l)
     elif id != None:
         l = License.objects.get(pk=id)
+        if request.method == "DELETE":
+            l.delete()
+            return json_response("")
         if request.method == "POST":
             return handle_update(request, l)
         return json_response(request, l)
@@ -62,6 +65,32 @@ def license(request, id=None):
             ]
         }   
         return json_response(request, data)
+
+@jsonexception
+def mirror(request, id=None):
+    @logged_in_or_basicauth()
+    def handle_update(request, mirror):
+        data = simplejson.loads(request.raw_post_data)
+        mirror.from_json(data, request.user)
+        mirror.save()
+        return json_response(request, mirror)
+    if id == None and request.method == "POST":
+        m = Mirror()
+        return handle_update(request, m)
+    elif id != None:
+        m = Mirror.objects.get(pk=id)
+        if request.method == "DELETE":
+            m.delete()
+            return json_response("")
+        elif request.method == "POST":
+            return handle_update(request, m)
+        return json_response(request, m)
+    else:
+        mirrors = Mirror.objects.all()
+        if 'image' in request.GET:
+            mirrors = mirrors.filter(image__id=request.GET['image'])
+        data = {'mirrors': [mirror.to_json() for mirror in mirrors]}   
+        return json_response(request, data) 
 
 @jsonexception
 def image(request, id=None):
@@ -77,7 +106,10 @@ def image(request, id=None):
         return handle_update(request,i)
     elif id != None:
         i = Image.objects.get(pk=id)
-        if request.method == "POST":
+        if request.method == "DELETE":
+            i.delete()
+            return json_response("")
+        elif request.method == "POST":
             return handle_update(request, i)
         return json_response(request, i)
     else:

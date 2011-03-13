@@ -187,3 +187,32 @@ POST /api/image/
   "user": 1
 }
 """
+GET /api/mirror/
+"""
+{
+  "mirrors": []
+}
+"""
+POST /api/mirror/
+"""
+{"image": 2, "url": "http://google.com/foo/"}
+"""
+"""
+{
+  "url": "http://google.com/foo/", 
+  "image": 2, 
+  "user": 1
+}
+"""
+GET /api/mirror/?image=2
+"""
+{
+  "mirrors": [
+    {
+      "url": "http://google.com/foo/", 
+      "image": 2, 
+      "user": 1
+    }
+  ]
+} 
+"""

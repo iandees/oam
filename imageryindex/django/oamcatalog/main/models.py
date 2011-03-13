@@ -194,7 +194,7 @@ class Image(models.Model):
     def to_json(self):
         data = {
             'id': self.id,
-            'url': self.url,
+            'source_url': self.url,
             'file_size': self.file_size,
             'file_format': self.file_format,
             'crs': self.crs,
@@ -208,11 +208,35 @@ class Image(models.Model):
             'vrt_date': self.vrt_date,
             'user': self.owner.id,
             'layers': [l.id for l in self.layers.all()]
-        }    
+        }
+        urls = [self.url]
+        mirrors = Mirror.objects.filter(image=self)
+        urls = urls + [mirror.url for mirror in mirrors]
+        data['urls'] = urls
         if self.attribution:
             data['attribution'] = self.attribution.to_json()
         return data    
 
+class Mirror(models.Model):
+    image = models.ForeignKey(Image)
+    url = models.TextField()
+    user = models.ForeignKey(User)
+    history = HistoryField()
+    last_updated = models.DateTimeField(auto_now=True)
+
+    def from_json(self, data, user):
+        im = Image.objects.get(pk=data['image'])
+        self.image = im
+        self.url = data['url']
+        self.user = user
+        self.save()
+    def to_json(self):
+        data = {
+            'image': self.image.id,
+            'url': self.url,
+            'user': self.user.id,
+        }
+        return data
 
 if history_support:
     fullhistory.register_model(Image)        
