@@ -105,7 +105,7 @@ def image(request, id=None):
             return handle_update(request, i)
         return json_response(request, i)
     else:
-        images = Image.objects.all()
+        images = Image.objects.all().select_related()
         output = request.GET.get('output', 'simple')
         if 'archive' in request.GET and request.GET['archive'].lower() in ("true", "t", "1"):
             images = images.filter(archive=True)
