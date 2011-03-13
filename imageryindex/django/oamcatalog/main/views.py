@@ -111,6 +111,8 @@ def image(request, id=None):
             images = images.filter(archive=True)
         else:
             images = images.filter(archive=False)
+        if 'layer' in request.GET:
+            images = images.filter(layer__id=request.GET['layer'])
         limited_images = images
         if 'bbox' in request.GET:
             limited_images = []
