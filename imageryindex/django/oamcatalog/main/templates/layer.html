@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ layer.name }}</h2>
+<p>{{layer.description}}</p>
+<ul>
+{% for i in layer.image_set.all %}
+  <li>{{i.id}}</li>
+{% endfor %}
+</ul>
+{% endblock %}  

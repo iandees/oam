@@ -4,7 +4,7 @@ import simplejson
 from main.models import Layer, Image, User, License, Mirror
 from django.contrib.gis.geos import Polygon
 from main.helpers import *
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, get_object_or_404
 
 @logged_in_or_basicauth()
 @jsonexception
@@ -139,6 +139,9 @@ def license_browse(request, id):
     images = l.image_set.order_by("-id")[0:5]
     return render_to_response("license.html", {'license': l, 'recent_images': images})
 
+def layer_browse(request, id):
+    l = get_object_or_404(Layer, pk=id)
+    return render_to_response("layer.html", {'layer': l})
 def image_browse(request, id):
     i = Image.objects.get(pk=id)
     return render_to_response("image.html", {'image': i})
