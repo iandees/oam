@@ -163,7 +163,8 @@ representation::
       "id": 1
     },
     "file_format": null,
-    "url": "http://example.com/200.tif",
+    "source_url": "http://example.com/200.tif",
+    "urls": ["http://example.com/200.tif", "http://example.com/400.tif"],
     "vrt_date": null,
     "width": 200
   }
