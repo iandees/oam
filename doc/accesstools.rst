@@ -31,4 +31,4 @@ When creating an application, you should:
 
 
 * This README.txt file will be read by the application catalog and made
-  available.
+  available. Note: there is no application catalog yet.
