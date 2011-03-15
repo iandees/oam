@@ -2,6 +2,7 @@
 from django.http import HttpResponse
 import simplejson
 from main.models import Layer, Image, User, License, Mirror
+from django.contrib.gis.geos import Polygon
 from main.helpers import *
 from django.shortcuts import render_to_response
 
@@ -105,29 +106,26 @@ def image(request, id=None):
             return handle_update(request, i)
         return json_response(request, i)
     else:
-        images = Image.objects.all()
+        images = Image.objects.all().select_related()
         output = request.GET.get('output', 'simple')
         if 'archive' in request.GET and request.GET['archive'].lower() in ("true", "t", "1"):
             images = images.filter(archive=True)
         else:
             images = images.filter(archive=False)
         if 'layer' in request.GET:
-            images = images.filter(layer__id=request.GET['layer'])
-        limited_images = images
+            images = images.filter(layers__id=request.GET['layer'])
         if 'bbox' in request.GET:
-            limited_images = []
             left, bottom, right, top = map(float, request.GET['bbox'].split(","))
-            for image in images:
-                ileft, ibottom, iright, itop = image.bbox.extent
-                inbottom = (((ibottom >= bottom) and (ibottom <= top)) or ((bottom >= ibottom) and (bottom <= itop)))
-                intop = (((itop >= bottom) and (itop <= top)) or ((top > ibottom) and (top < itop)))
-                inleft = (((ileft >= left) and (ileft <= right)) or ((left >= ileft) and (left <= iright)))
-                inright = (((iright >= left) and (iright <= right)) or ((right >= iright) and (right <= iright)))
-                intersects = ((inbottom or intop) and (inleft or inright))
-                if intersects: 
-                    limited_images.append(image)
+            box = Polygon.from_bbox([left, bottom, right, top])
+            images = images.filter(bbox__intersects=box)
+        limit = int(request.GET.get("limit", 10000))   
+        if limit > 10000:
+            limit = 10000
+        start = int(request.GET.get("start", 0))    
+        end = start + limit
+        images = images.order_by("-id")    
         data = {'images': [
-            i.to_json(output=output) for i in limited_images
+            i.to_json(output=output) for i in images[start:end]
             ]
         }   
         return json_response(request, data)

@@ -140,6 +140,7 @@ class Image(models.Model):
     archive = models.BooleanField(default=True)
     owner = models.ForeignKey(User)
     history = HistoryField()
+    objects = models.GeoManager()
     def from_json(self, data, user):
         if 'source_url' in data:
             data['url'] = data['source_url']
