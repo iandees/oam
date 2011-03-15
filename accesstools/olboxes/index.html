@@ -29,24 +29,38 @@
                 
         function init(){
             
-            map = new OpenLayers.Map( 'map' );
+            map = new OpenLayers.Map( 'map', {displayProjection: new OpenLayers.Projection("EPSG:4326")} );
             layer = new OpenLayers.Layer.OSM("OSM");
             map.addLayer(layer);
             layer = new OpenLayers.Layer.Vector("", {
-                strategies: [new OpenLayers.Strategy.Fixed()],
+                strategies: [new OpenLayers.Strategy.BBOX({resFactor: 1.1,ratio:1.0})],
                 protocol: new OpenLayers.Protocol.HTTP({
-                   url: "http://oam.osgeo.org/api/image/?archive=1",
+                   url: "http://oam.osgeo.org/api/image/?limit=500",
                    format: new OAMFormat()
-                })});
+                }),
+                'renderers': ['Canvas']
+                });
             map.addLayer(layer); 
-            layer.events.register("loadend", layer, function() {
-                layer.map.zoomToExtent(layer.getDataExtent())
+            layer.events.register("loadstart", layer, function() {
+                $("info").innerHTML = "Loading...";
             });    
-            map.zoomToMaxExtent();
+            layer.events.register("loadend", layer, function() {
+                $("info").innerHTML = "Loaded " + layer.features.length + " features (500 max)";
+//                layer.map.zoomToExtent(layer.getDataExtent())
+            });   
+            map.addControl(new OpenLayers.Control.Permalink());
+            
+            if (!map.getCenter()) {
+                map.zoomToMaxExtent();
+            } else {
+                // kick the bbox strategy
+                map.setCenter();
+            }    
         }
     </script>
   </head>
   <body onload="init()">
-    <div id="map" class="smallmap" style="width:100%; height: 100%"></div>
+    <div id="info" style="height: 10%"></div>
+    <div id="map" class="smallmap" style="width:100%; height: 90%"></div>
   </body>
 </html>
