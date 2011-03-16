@@ -26,7 +26,7 @@ class License(models.Model):
             if ls.count():
                 return ls[0]
         errors = []
-        for key in ['name', 'url', 'restrictions', 'url']:
+        for key in ['name', 'url', 'additional']:
             setattr(self, key, data.get(key, ''))
         flags = data.get('options', {})
         for flag,value in flags.items():
