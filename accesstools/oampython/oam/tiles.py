@@ -30,7 +30,11 @@ from copy import deepcopy
 from xml.dom.minidom import getDOMImplementation
 
 import oam
-import PIL.Image
+
+try:
+    from PIL import Image
+except ImportError:
+    import Image
 
 from ModestMaps.Core import Point
 from TileStache.Core import KnownUnknown
@@ -116,7 +120,7 @@ class Provider:
             
             r, g, b = [destination_ds.GetRasterBand(i).ReadRaster(0, 0, width, height) for i in (1, 2, 3)]
             data = ''.join([''.join(pixel) for pixel in zip(r, g, b)])
-            area = PIL.Image.fromstring('RGB', (width, height), data)
+            area = Image.fromstring('RGB', (width, height), data)
     
         finally:
             for filename in garbage:
