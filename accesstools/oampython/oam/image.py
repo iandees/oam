@@ -187,7 +187,7 @@ class Image(object):
             path = "/vsicurl/" + path # use the VSI curl driver
         if mode is None:
             mode = gdal.GA_ReadOnly
-        dataset = gdal.Open(path, mode)
+        dataset = gdal.Open(str(path), mode)
         if dataset is None:
             raise ImageException("Cannot open %s" % path)
         return dataset
