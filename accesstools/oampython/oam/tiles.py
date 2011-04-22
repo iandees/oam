@@ -1,11 +1,5 @@
 """ In-progress TileStache provider for OpenAerialMap.
 
-TODO:
-    - stop using hard-coded junk username/password in oam.Client constructor.
-    - add archive server blacklist and whitelist.
-    - enforce spherical mercator projection?
-    - allow for local cache of big remote files
-
 Example configuration file:
 
     {
@@ -14,7 +8,11 @@ Example configuration file:
       {
         "oam":
         {
-            "provider": {"class": "oam.tiles.Provider"}
+            "provider":
+            {
+              "class": "oam.tiles:Provider",
+              "kwargs": {"username": "john", "password": "doe"}
+            }
         }
       }
     }
@@ -22,6 +20,11 @@ Example configuration file:
 Read more about TileStache and its configuration here:
     http://tilestache.org/doc/
     http://tilestache.org/doc/#configuring-tilestache
+
+TODO:
+    - add archive server blacklist and whitelist.
+    - enforce spherical mercator projection?
+    - allow for local cache of big remote files
 """
 from tempfile import mkstemp
 from os import close, unlink
@@ -48,9 +51,9 @@ except ImportError:
 
 class Provider:
     
-    def __init__(self, layer):
+    def __init__(self, layer, username='username', password='password'):
         self.layer = layer
-        self.client = oam.Client('username', 'password')
+        self.client = oam.Client(username, password)
 
     def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, zoom):
     
