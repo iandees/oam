@@ -66,7 +66,7 @@ class Provider:
             ne = self.layer.projection.projLocation(Point(xmax, ymax))
             
             bbox = sw.lon, sw.lat, ne.lon, ne.lat
-            images = self.client.images_by_bbox(bbox)
+            images = self.client.images_by_bbox(bbox, output='full')
             images = map(localize_image_path, images)
             
             # Set up a target oam.Image ----------------------------------------
