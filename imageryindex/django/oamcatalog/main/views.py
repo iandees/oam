@@ -1,10 +1,14 @@
 # Create your views here.
 from django.http import HttpResponse
-import simplejson
 from main.models import Layer, Image, User, License, Mirror
 from django.contrib.gis.geos import Polygon
 from main.helpers import *
 from django.shortcuts import render_to_response, get_object_or_404
+
+try:
+    import simplejson
+except:
+    import json
 
 @logged_in_or_basicauth()
 @jsonexception
