@@ -27,10 +27,14 @@ TODO:
     - allow for local cache of big remote files
 """
 from tempfile import mkstemp
-from os import close, unlink
 from urlparse import urljoin
 from copy import deepcopy
 from xml.dom.minidom import getDOMImplementation
+
+import os
+# Make sure that GDAL doesn't attempt to GetFileList over /vsicurl/
+# as this can get very slow when directory listings are lengthy.
+os.environ["GDAL_DISABLE_READDIR_ON_OPEN"]="YES"
 
 import oam
 
