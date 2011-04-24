@@ -9,16 +9,25 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-DATABASE_ENGINE = 'postgresql_psycopg2'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-DATABASE_NAME = 'oam'             # Or path to database file if using sqlite3.
-DATABASE_USER = 'crschmidt'             # Not used with sqlite3.
-DATABASE_PASSWORD = ''         # Not used with sqlite3.
-DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
-DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
+DATABASE_ENGINE = 'postgresql_psycopg2'
+DATABASE_NAME = 'oam'
+DATABASE_USER = 'postgres'
+DATABASE_PASSWORD = ''
+DATABASE_HOST = ''
+DATABASE_PORT = ''
 DATABASE_OPTIONS = {
     "autocommit": True,
 }
 
+# django 1.2 compatible database settings
+DATABASES = {
+    'default': {
+        'NAME': DATABASE_NAME, # modify in local settings
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'USER': DATABASE_USER,
+        'PASSWORD': DATABASE_PASSWORD
+    }
+}
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
