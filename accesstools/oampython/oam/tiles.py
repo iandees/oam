@@ -67,6 +67,10 @@ class Provider:
             images = self.client.images_by_bbox(bbox, output='full')
             images = map(localize_image_path, images)
             
+            if not images:
+                # once you go black
+                return Image.new('RGB', (width, height), (0, 0, 0))
+            
             # Set up a target oam.Image ----------------------------------------
             
             target = oam.Image("unused", bbox, width, height, crs=images[0].crs)
