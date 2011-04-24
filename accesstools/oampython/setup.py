@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
     name='OAM',
-    version='0.2.1',
+    version='0.2.2',
     description='Client library for OpenAerialMap (http://oam.osgeo.org)',
     author='Schuyler Erle',
     author_email='schuyler@nocat.net',
