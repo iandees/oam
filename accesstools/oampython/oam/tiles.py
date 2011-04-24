@@ -86,13 +86,13 @@ class Provider:
             source_ds = gdal.Open(vrt)
             
             assert source_ds, \
-                "oam.tiles.Provider couldn't open the file: %s" % vrtpath
+                "oam.tiles.Provider couldn't open the VRT: %s" % vrt
             
             # Prepare output gdal datasource -----------------------------------
             destination_ds = driver.Create('/vsimem/output', width, height, 3)
 
             assert destination_ds is not None, \
-                "oam.tiles.Provider couldn't make the file: %s" % areapath
+                "oam.tiles.Provider couldn't make the file: /vsimem/output"
             
             merc = osr.SpatialReference()
             merc.ImportFromProj4(srs)
