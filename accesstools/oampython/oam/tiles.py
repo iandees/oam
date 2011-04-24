@@ -60,7 +60,12 @@ class Provider:
         self.client = oam.Client(username, password)
 
     def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, zoom):
+        """ Return a PIL Image for a given area.
+        
+            For more info: http://tilestache.org/doc/#custom-providers.
+        """
         driver = gdal.GetDriverByName('GTiff')
+
         try:
             # Figure out bbox and contained images -----------------------------
             
@@ -89,6 +94,7 @@ class Provider:
                 "oam.tiles.Provider couldn't open the VRT: %s" % vrt
             
             # Prepare output gdal datasource -----------------------------------
+
             destination_ds = driver.Create('/vsimem/output', width, height, 3)
 
             assert destination_ds is not None, \
@@ -112,6 +118,7 @@ class Provider:
             r, g, b = [destination_ds.GetRasterBand(i).ReadRaster(0, 0, width, height) for i in (1, 2, 3)]
             data = ''.join([''.join(pixel) for pixel in zip(r, g, b)])
             area = Image.fromstring('RGB', (width, height), data)
+
         finally:
             driver.Delete("/vsimem/output")
 
