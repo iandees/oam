@@ -1,26 +1,26 @@
 # Create your views here.
 from django.http import HttpResponse
+import simplejson
 from main.models import Layer, Image, User, License, Mirror
 from django.contrib.gis.geos import Polygon
 from main.helpers import *
 from django.shortcuts import render_to_response, get_object_or_404
 
-try:
-    import simplejson
-except:
-    import json
-
-@logged_in_or_basicauth()
 @jsonexception
 def layer(request, id=None):
-    if id == None and request.method == "POST":
+    @logged_in_or_basicauth()
+    def handle_update(request, layer):
         data = simplejson.loads(request.raw_post_data)
+        warnings = []
+        layer.from_json(data, request.user)
+        layer.save()
+        return json_response(request, layer)
+    if id == None and request.method == "POST":
         l = Layer()
-        l.from_json(data, request.user)
-        return json_response(request, l)
-    elif id != None and id != "all":
+        return handle_update(request, l)
+    elif id != None and request.method == "POST":
         l = Layer.objects.get(pk=id)
-        return json_response(request, l)
+        return handle_update(request, l)
     else:
         layers = Layer.objects.all()
         data = {'layers': [
