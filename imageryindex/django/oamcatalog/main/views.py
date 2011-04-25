@@ -8,6 +8,7 @@ from django.http import HttpResponse
 
 from math import sqrt
 from StringIO import StringIO
+from os import environ
 
 from osgeo import gdal
 from PIL import Image as PILImage
@@ -161,20 +162,17 @@ def image_browse(request, id):
     i = Image.objects.get(pk=id)
     return render_to_response("image.html", {'image': i})
 
-def image_thumbnail(request, id):
+def _image_image(im, area):
     """
     """
-    from os import environ
     environ['GDAL_DISABLE_READDIR_ON_OPEN'] = 'YES'
     #environ['CPL_DEBUG'] = 'On'
 
-    im = Image.objects.get(pk=id)
     ds = gdal.Open('/vsicurl/' + str(im.url))
     
     #
     # Determine a good thumbnail size based on desired area
     #
-    area = 120 * 120 # desired area of thumbnail
     aspect = float(ds.RasterXSize) / float(ds.RasterYSize)
     th_height = int(sqrt(area / aspect))
     th_width = int(aspect * th_height)
@@ -207,9 +205,28 @@ def image_thumbnail(request, id):
     #
     # Return an image
     #
+    thumb = PILImage.merge('RGB', chans)
+
+    return thumb
+
+def image_thumbnail(request, id):
+    """
+    """
+    image = Image.objects.get(pk=id)
+    thumb = _image_image(image, 120 * 120) # desired area of thumbnail
     buffer = StringIO()
 
-    thumb = PILImage.merge('RGB', chans)
     thumb.save(buffer, 'JPEG')
+    
+    return HttpResponse(buffer.getvalue(), mimetype='image/jpeg')
+
+def image_preview(request, id):
+    """
+    """
+    image = Image.objects.get(pk=id)
+    preview = _image_image(image, 320 * 320) # desired area of preview
+    buffer = StringIO()
+
+    preview.save(buffer, 'JPEG')
     
     return HttpResponse(buffer.getvalue(), mimetype='image/jpeg')

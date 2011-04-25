@@ -4,7 +4,11 @@
   <h3>Recently Uploaded Images</h3>
   <ul>
   {% for image in images %}
-    <li><a href="/image/{{image.id}}/">{{image.id}}</a></li>
+    <li>
+        <a href="/image/{{image.id}}/">{{image.id}}</a>
+        <br>
+        <a href="/image/{{image.id}}/"><img src="/image/{{image.id}}/thumb.jpg"></a>
+    </li>
   {% endfor %}
   </ul>
 {% endblock %}  
