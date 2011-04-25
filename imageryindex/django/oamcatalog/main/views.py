@@ -1,16 +1,20 @@
 # Create your views here.
 from django.http import HttpResponse
-import simplejson
 from main.models import Layer, Image, User, License, Mirror
 from django.contrib.gis.geos import Polygon
 from main.helpers import *
 from django.shortcuts import render_to_response, get_object_or_404
 
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 @jsonexception
 def layer(request, id=None):
     @logged_in_or_basicauth()
     def handle_update(request, layer):
-        data = simplejson.loads(request.raw_post_data)
+        data = json.loads(request.raw_post_data)
         warnings = []
         layer.from_json(data, request.user)
         layer.save()
@@ -33,7 +37,7 @@ def layer(request, id=None):
 def license(request, id=None):
     @logged_in_or_basicauth()
     def handle_update(request, license):
-        data = simplejson.loads(request.raw_post_data)
+        data = json.loads(request.raw_post_data)
         warnings = []
         if not license.id:
             if 'url' in data:
@@ -67,7 +71,7 @@ def license(request, id=None):
 def mirror(request, id=None):
     @logged_in_or_basicauth()
     def handle_update(request, mirror):
-        data = simplejson.loads(request.raw_post_data)
+        data = json.loads(request.raw_post_data)
         mirror.from_json(data, request.user)
         mirror.save()
         return json_response(request, mirror)
@@ -93,7 +97,7 @@ def mirror(request, id=None):
 def image(request, id=None):
     @logged_in_or_basicauth()
     def handle_update(request, image):
-        data = simplejson.loads(request.raw_post_data)
+        data = json.loads(request.raw_post_data)
         image.from_json(data, request.user)
         image.save()
         return json_response(request, image)
