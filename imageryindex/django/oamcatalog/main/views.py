@@ -166,7 +166,7 @@ def image_thumbnail(request, id):
     """
     from os import environ
     environ['GDAL_DISABLE_READDIR_ON_OPEN'] = 'YES'
-    environ['CPL_DEBUG'] = 'Off'
+    #environ['CPL_DEBUG'] = 'On'
 
     im = Image.objects.get(pk=id)
     ds = gdal.Open('/vsicurl/' + str(im.url))
@@ -176,36 +176,40 @@ def image_thumbnail(request, id):
     #
     area = 120 * 120 # desired area of thumbnail
     aspect = float(ds.RasterXSize) / float(ds.RasterYSize)
-    height = int(sqrt(area / aspect))
-    width = int(aspect * height)
+    th_height = int(sqrt(area / aspect))
+    th_width = int(aspect * th_height)
     
     #
-    # Calculate the new geo transform
+    # Extract the best-sized overview from the source image
     #
-    xform = list(ds.GetGeoTransform())
-    xform[1] *= float(ds.RasterXSize) / width
-    xform[5] *= float(ds.RasterYSize) / height
+    interps = dict([(getattr(gdal, gci), gci[4:-4]) for gci in dir(gdal) if gci.startswith('GCI')])
+    bands = dict([(interps[ds.GetRasterBand(i).GetColorInterpretation()], ds.GetRasterBand(i)) for i in range(1, 1 + ds.RasterCount)])
+    chans = []
     
-    #
-    # Create a new, smaller dataset
-    #
-    th = ds.GetDriver().Create('/vsimem/thumbnail', width, height, ds.RasterCount)
-    th.SetProjection(ds.GetProjection())
-    th.SetGeoTransform(xform)
+    for (chan, interp) in enumerate(('Red', 'Green', 'Blue')):
+        if interp not in bands:
+            # bad news
+            continue
 
-    for (band, interp) in ((1, 'Red'), (2, 'Green'), (1, 'Blue')):
-        th.GetRasterBand(band).SetColorInterpretation(getattr(gdal, 'GCI_%sBand' % interp))
-    
-    gdal.ReprojectImage(ds, th, None, None, gdal.GRA_Cubic)
+        band = bands[interp]
+        overviews = [band.GetOverview(i) for i in range(band.GetOverviewCount())]
+        overviews = [(ov.XSize, ov.YSize, ov) for ov in overviews]
+        
+        for (ov_width, ov_height, overview) in sorted(overviews):
+            if ov_width > th_width:
+                data = overview.ReadRaster(0, 0, ov_width, ov_height)
+                chan = PILImage.fromstring('L', (ov_width, ov_height), data)
+                chan = chan.resize((th_width, th_height), PILImage.ANTIALIAS)
+
+                chans.append(chan)
+                break
     
     #
     # Return an image
     #
-    r, g, b = [th.GetRasterBand(i).ReadRaster(0, 0, width, height) for i in (1, 2, 3)]
-    data = ''.join([''.join(pixel) for pixel in zip(r, g, b)])
-    area = PILImage.fromstring('RGB', (width, height), data)
+    buffer = StringIO()
+
+    thumb = PILImage.merge('RGB', chans)
+    thumb.save(buffer, 'JPEG')
     
-    buff = StringIO()
-    area.save(buff, 'JPEG')
-    
-    return HttpResponse(buff.getvalue(), mimetype='image/jpeg')
+    return HttpResponse(buffer.getvalue(), mimetype='image/jpeg')
