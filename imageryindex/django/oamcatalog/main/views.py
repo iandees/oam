@@ -2,21 +2,20 @@
 from django.http import HttpResponse
 from main.models import Layer, Image, User, License, Mirror
 from django.contrib.gis.geos import Polygon
-from main.helpers import *
 from django.shortcuts import render_to_response, get_object_or_404
 from django.http import HttpResponse
+from django.core.cache import cache
 
-from math import sqrt
 from StringIO import StringIO
-from os import environ
-
-from osgeo import gdal
-from PIL import Image as PILImage
 
 try:
     import json
 except ImportError:
     import simplejson as json
+
+from main.helpers import \
+    jsonexception, jsonexception, logged_in_or_basicauth, \
+    image_made_smaller, image_cache_key
 
 @jsonexception
 def layer(request, id=None):
@@ -162,71 +161,26 @@ def image_browse(request, id):
     i = Image.objects.get(pk=id)
     return render_to_response("image.html", {'image': i})
 
-def _image_image(im, area):
+def image_preview(request, id, size):
     """
     """
-    environ['GDAL_DISABLE_READDIR_ON_OPEN'] = 'YES'
-    #environ['CPL_DEBUG'] = 'On'
+    image = Image.objects.get(pk=id)
 
-    ds = gdal.Open('/vsicurl/' + str(im.url))
+    if size == 'thumbnail':
+        area = 120 * 120
+    else:
+        area = 320 * 320
     
-    #
-    # Determine a good thumbnail size based on desired area
-    #
-    aspect = float(ds.RasterXSize) / float(ds.RasterYSize)
-    th_height = int(sqrt(area / aspect))
-    th_width = int(aspect * th_height)
+    key = image_cache_key(image, str(area))
+    val = cache.get(key)
     
-    #
-    # Extract the best-sized overview from the source image
-    #
-    interps = dict([(getattr(gdal, gci), gci[4:-4]) for gci in dir(gdal) if gci.startswith('GCI')])
-    bands = dict([(interps[ds.GetRasterBand(i).GetColorInterpretation()], ds.GetRasterBand(i)) for i in range(1, 1 + ds.RasterCount)])
-    chans = []
+    if val is None:
+        preview = image_made_smaller(image, area)
+        buffer = StringIO()
     
-    for (chan, interp) in enumerate(('Red', 'Green', 'Blue')):
-        if interp not in bands:
-            # bad news
-            continue
-
-        band = bands[interp]
-        overviews = [band.GetOverview(i) for i in range(band.GetOverviewCount())]
-        overviews = [(ov.XSize, ov.YSize, ov) for ov in overviews]
+        preview.save(buffer, 'JPEG')
+        val = buffer.getvalue()
         
-        for (ov_width, ov_height, overview) in sorted(overviews):
-            if ov_width > th_width:
-                data = overview.ReadRaster(0, 0, ov_width, ov_height)
-                chan = PILImage.fromstring('L', (ov_width, ov_height), data)
-                chan = chan.resize((th_width, th_height), PILImage.ANTIALIAS)
-
-                chans.append(chan)
-                break
+        cache.set(key, val, 86400)
     
-    #
-    # Return an image
-    #
-    thumb = PILImage.merge('RGB', chans)
-
-    return thumb
-
-def image_thumbnail(request, id):
-    """
-    """
-    image = Image.objects.get(pk=id)
-    thumb = _image_image(image, 120 * 120) # desired area of thumbnail
-    buffer = StringIO()
-
-    thumb.save(buffer, 'JPEG')
-    
-    return HttpResponse(buffer.getvalue(), mimetype='image/jpeg')
-
-def image_preview(request, id):
-    """
-    """
-    image = Image.objects.get(pk=id)
-    preview = _image_image(image, 320 * 320) # desired area of preview
-    buffer = StringIO()
-
-    preview.save(buffer, 'JPEG')
-    
-    return HttpResponse(buffer.getvalue(), mimetype='image/jpeg')
+    return HttpResponse(val, mimetype='image/jpeg')

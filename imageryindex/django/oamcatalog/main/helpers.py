@@ -5,10 +5,19 @@ import sys
 import traceback
 import base64
 
+from os import environ
+from urlparse import urlparse
+from os.path import basename
+from hashlib import md5
+from math import sqrt
+
 try:
     import json
 except ImportError:
     import simplejson as json
+
+from osgeo import gdal
+from PIL import Image
 
 from django.http import HttpResponse
 from django.contrib.auth import authenticate, login
@@ -252,4 +261,56 @@ def has_perm_or_basicauth(perm, realm = ""):
         return wrapper
     return view_decorator
 
+def image_made_smaller(im, area):
+    """
+    """
+    environ['GDAL_DISABLE_READDIR_ON_OPEN'] = 'YES'
+    #environ['CPL_DEBUG'] = 'On'
 
+    ds = gdal.Open('/vsicurl/' + str(im.url))
+    
+    #
+    # Determine a good thumbnail size based on desired area
+    #
+    aspect = float(ds.RasterXSize) / float(ds.RasterYSize)
+    th_height = int(sqrt(area / aspect))
+    th_width = int(aspect * th_height)
+    
+    #
+    # Extract the best-sized overview from the source image
+    #
+    interps = dict([(getattr(gdal, gci), gci[4:-4]) for gci in dir(gdal) if gci.startswith('GCI')])
+    bands = dict([(interps[ds.GetRasterBand(i).GetColorInterpretation()], ds.GetRasterBand(i)) for i in range(1, 1 + ds.RasterCount)])
+    chans = []
+    
+    for (chan, interp) in enumerate(('Red', 'Green', 'Blue')):
+        assert interp in bands, '%s missing from bands - bad news.' % interp
+
+        band = bands[interp]
+        overviews = [band.GetOverview(i) for i in range(band.GetOverviewCount())]
+        overviews = [(ov.XSize, ov.YSize, ov) for ov in overviews]
+        
+        for (ov_width, ov_height, overview) in sorted(overviews):
+            if ov_width > th_width:
+                data = overview.ReadRaster(0, 0, ov_width, ov_height)
+                chan = Image.fromstring('L', (ov_width, ov_height), data)
+                chan = chan.resize((th_width, th_height), Image.ANTIALIAS)
+
+                chans.append(chan)
+                break
+    
+    #
+    # Return an image
+    #
+    thumb = Image.merge('RGB', chans)
+
+    return thumb
+
+def image_cache_key(image, extra):
+    """
+    """
+    s, host, path, q, p, f = urlparse(image.url)
+    hash = md5(image.url).hexdigest()
+    name = basename(path)
+    
+    return '-'.join((host, hash, extra, name))
