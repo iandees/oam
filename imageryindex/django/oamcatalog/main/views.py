@@ -4,6 +4,13 @@ from main.models import Layer, Image, User, License, Mirror
 from django.contrib.gis.geos import Polygon
 from main.helpers import *
 from django.shortcuts import render_to_response, get_object_or_404
+from django.http import HttpResponse
+
+from math import sqrt
+from StringIO import StringIO
+
+from osgeo import gdal
+from PIL import Image as PILImage
 
 try:
     import json
@@ -153,3 +160,52 @@ def layer_browse(request, id):
 def image_browse(request, id):
     i = Image.objects.get(pk=id)
     return render_to_response("image.html", {'image': i})
+
+def image_thumbnail(request, id):
+    """
+    """
+    from os import environ
+    environ['GDAL_DISABLE_READDIR_ON_OPEN'] = 'YES'
+    environ['CPL_DEBUG'] = 'Off'
+
+    im = Image.objects.get(pk=id)
+    ds = gdal.Open('/vsicurl/' + str(im.url))
+    
+    #
+    # Determine a good thumbnail size based on desired area
+    #
+    area = 120 * 120 # desired area of thumbnail
+    aspect = float(ds.RasterXSize) / float(ds.RasterYSize)
+    height = int(sqrt(area / aspect))
+    width = int(aspect * height)
+    
+    #
+    # Calculate the new geo transform
+    #
+    xform = list(ds.GetGeoTransform())
+    xform[1] *= float(ds.RasterXSize) / width
+    xform[5] *= float(ds.RasterYSize) / height
+    
+    #
+    # Create a new, smaller dataset
+    #
+    th = ds.GetDriver().Create('/vsimem/thumbnail', width, height, ds.RasterCount)
+    th.SetProjection(ds.GetProjection())
+    th.SetGeoTransform(xform)
+
+    for (band, interp) in ((1, 'Red'), (2, 'Green'), (1, 'Blue')):
+        th.GetRasterBand(band).SetColorInterpretation(getattr(gdal, 'GCI_%sBand' % interp))
+    
+    gdal.ReprojectImage(ds, th, None, None, gdal.GRA_Cubic)
+    
+    #
+    # Return an image
+    #
+    r, g, b = [th.GetRasterBand(i).ReadRaster(0, 0, width, height) for i in (1, 2, 3)]
+    data = ''.join([''.join(pixel) for pixel in zip(r, g, b)])
+    area = PILImage.fromstring('RGB', (width, height), data)
+    
+    buff = StringIO()
+    area.save(buff, 'JPEG')
+    
+    return HttpResponse(buff.getvalue(), mimetype='image/jpeg')
