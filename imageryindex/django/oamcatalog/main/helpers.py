@@ -268,6 +268,8 @@ def image_size_small(im_width, im_height, size):
         area = 120 * 120
     elif size == 'preview':
         area = 320 * 320
+    elif size == 'large':
+        area = 640 * 640
     else:
         raise Exception('Don\'t know about "%s"' % size)
     
