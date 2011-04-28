@@ -14,8 +14,8 @@ except ImportError:
     import simplejson as json
 
 from main.helpers import \
-    jsonexception, jsonexception, logged_in_or_basicauth, \
-    image_made_smaller, image_cache_key
+    jsonexception, jsonexception, json_response, logged_in_or_basicauth, \
+    image_made_smaller, image_cache_key, image_size_small
 
 @jsonexception
 def layer(request, id=None):
@@ -146,7 +146,13 @@ def image(request, id=None):
         return json_response(request, data)
 
 def home(request):
-    images = Image.objects.order_by("-id")[0:10]
+    """
+    """
+    images = [{'id': img.id, 'image': img,
+               'thumb_size': image_size_small(img.width, img.height, 'thumbnail')}
+              for img
+              in Image.objects.order_by("-id")[0:10]]
+
     return render_to_response("home.html", {'images': images})
 
 def license_browse(request, id):
@@ -166,16 +172,11 @@ def image_preview(request, id, size):
     """
     image = Image.objects.get(pk=id)
 
-    if size == 'thumbnail':
-        area = 120 * 120
-    else:
-        area = 320 * 320
-    
-    key = image_cache_key(image, str(area))
+    key = image_cache_key(image, size)
     val = cache.get(key)
     
     if val is None:
-        preview = image_made_smaller(image, area)
+        preview = image_made_smaller(image, size)
         buffer = StringIO()
     
         preview.save(buffer, 'JPEG')

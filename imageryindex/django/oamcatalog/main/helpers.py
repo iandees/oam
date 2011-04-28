@@ -261,20 +261,30 @@ def has_perm_or_basicauth(perm, realm = ""):
         return wrapper
     return view_decorator
 
-def image_made_smaller(im, area):
+def image_size_small(im_width, im_height, size):
+    """ Determine a good thumbnail size based on desired named size.
+    """
+    if size == 'thumbnail':
+        area = 120 * 120
+    elif size == 'preview':
+        area = 320 * 320
+    else:
+        raise Exception('Don\'t know about "%s"' % size)
+    
+    aspect = float(im_width) / float(im_height)
+    th_height = int(sqrt(area / aspect))
+    th_width = int(aspect * th_height)
+    
+    return th_width, th_height
+
+def image_made_smaller(im, size):
     """
     """
     environ['GDAL_DISABLE_READDIR_ON_OPEN'] = 'YES'
     #environ['CPL_DEBUG'] = 'On'
 
     ds = gdal.Open('/vsicurl/' + str(im.url))
-    
-    #
-    # Determine a good thumbnail size based on desired area
-    #
-    aspect = float(ds.RasterXSize) / float(ds.RasterYSize)
-    th_height = int(sqrt(area / aspect))
-    th_width = int(aspect * th_height)
+    th_width, th_height = image_size_small(ds.RasterXSize, ds.RasterYSize, size)
     
     #
     # Extract the best-sized overview from the source image
