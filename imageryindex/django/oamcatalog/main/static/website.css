@@ -19,25 +19,17 @@ padding-left: 10px;
 padding-right: 10px;
 }
 
-#header {
-background: #9D9FA1;
-color: #FFFFFF;
-font-family: "Trebuchet MS", Verdana, Lucida-Sans, Helvetica, Arial, sans-serif;
-font-size: 44px;
-text-shadow: 2px 2px 3px gray;
-height: 64px;
-padding: 4px 16px 0px 16px;
-vertical-align: top;
+#header
+{
+	color: #FFFFFF;
+	height: 150px;
+	background-color: #4D6384;
+	background-image: url(header.jpg);
+	background-position: right bottom;
 }
 
-h1 {
-   font-size: 100%;
-   margin: 0px;
-} 
-h1 a {
-   text-decoration: none;
-   color: white;
-}  
+#header h1 { margin: 0 0 0 -1000px; }
+
 #main {
     padding: 10px; 
 }   
@@ -46,3 +38,12 @@ h1 a {
     float: right;
     padding-right: 10px;
 }    
+
+/*
+li
+{
+    display: block;
+    float: left;
+    margin: 0 1em 1em 0;
+}
+*/

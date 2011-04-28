@@ -7,7 +7,7 @@
     <li>
         <a href="/image/{{image.id}}/">{{image.id}}</a>
         <br>
-        <a href="/image/{{image.id}}/"><img src="/image/{{image.id}}/thumbnail.jpg"></a>
+        <a href="/image/{{image.id}}/"><img src="/image/{{image.id}}/thumbnail.jpg" width="{{ image.thumb_size.0 }}" height="{{ image.thumb_size.1 }}"></a>
     </li>
   {% endfor %}
   </ul>
