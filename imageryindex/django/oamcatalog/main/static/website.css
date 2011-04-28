@@ -1,15 +1,8 @@
-body {
-margin: 0px;
-font-family: Georgia, Minion, LucidaBright, Palatino, serif;
-}
-#mainnav {
-background: rgb(233,238,249);
-border: none;
-border-bottom: 1px solid #d7d7d7;
- margin: .66em 0 .33em;
- padding: .2em 0;
- height: 10px;
-margin-top: 0px;
+body
+{
+    margin: 0 56px 2em 2em;
+    font-family: Georgia, Minion, LucidaBright, Palatino, serif;
+    background-color: #d1e9ff;
 }
 
 /* Accommodate our login info at the bottom of the page */
@@ -21,11 +14,13 @@ padding-right: 10px;
 
 #header
 {
-	color: #FFFFFF;
+	color: #fff;
 	height: 150px;
-	background-color: #4D6384;
+	margin: 0 -56px 0 -2em;
+	background-color: #4d6384;
 	background-image: url(header.jpg);
 	background-position: right bottom;
+	border-bottom: 1px solid #253d5b;
 }
 
 #header h1 { margin: 0 0 0 -1000px; }
