@@ -2,6 +2,8 @@ body
 {
     margin: 0 56px 2em 2em;
     font-family: Georgia, Minion, LucidaBright, Palatino, serif;
+    font-size: 14px;
+    line-height: 18px;
     background-color: #d1e9ff;
 }
 
@@ -42,3 +44,44 @@ li
     margin: 0 1em 1em 0;
 }
 */
+
+ul.image-pile
+{
+    display: block;
+    width: 980px;
+    background: white;
+    margin: 0;
+    padding: 0;
+}
+    
+    ul.image-pile li
+    {
+        margin: 0 15px 15px 0;
+        padding: 16px;
+        border: 1px solid #c4dbf0;
+        border-radius: 3px;
+        
+        background: white;
+        display: block;
+        float: left;
+    }
+    
+        ul.image-pile li img
+        {
+            border-radius: 3px;
+        }
+        
+        ul.image-pile li p
+        {
+        	margin: 0 0 16px 0;
+        }
+        
+    ul.image-pile li.single
+    {
+        width: 196px;
+    }
+    
+    ul.image-pile li.double
+    {
+        width: 440px;
+    }

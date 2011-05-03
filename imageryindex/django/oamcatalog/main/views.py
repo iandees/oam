@@ -148,11 +148,15 @@ def image(request, id=None):
 def home(request):
     """
     """
-    images = [{'id': img.id, 'image': img,
-               'thumb_size': image_size_small(img.width, img.height, 'thumbnail')}
-              for img
-              in Image.objects.order_by("-id")[0:10]]
-
+    images = []
+    
+    for img in Image.objects.order_by("-id")[0:30]:
+        width, height = image_size_small(img.width, img.height, 'thumbnail')
+        columns = (width < 240) and 'single' or 'double'
+        
+        image = {'id': img.id, 'image': img, 'thumb_size': [width, height], 'columns': columns}
+        images.append(image)
+    
     return render_to_response("home.html", {'images': images})
 
 def license_browse(request, id):

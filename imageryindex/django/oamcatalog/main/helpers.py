@@ -264,8 +264,16 @@ def has_perm_or_basicauth(perm, realm = ""):
 def image_size_small(im_width, im_height, size):
     """ Determine a good thumbnail size based on desired named size.
     """
+    aspect = float(im_width) / float(im_height)
+
     if size == 'thumbnail':
-        area = 120 * 120
+        if aspect > 1.6:
+            return 440, int(440 / aspect)
+        elif aspect < .3:
+            return 98, int(98 / aspect)
+        else:
+            return 196, int(196 / aspect)
+    
     elif size == 'preview':
         area = 320 * 320
     elif size == 'large':
@@ -273,7 +281,6 @@ def image_size_small(im_width, im_height, size):
     else:
         raise Exception('Don\'t know about "%s"' % size)
     
-    aspect = float(im_width) / float(im_height)
     th_height = int(sqrt(area / aspect))
     th_width = int(aspect * th_height)
     
