@@ -3,11 +3,7 @@ from django.http import Http404, HttpResponse
 import django.conf
 import sys
 import traceback
-try:
-    import simplejson
-except:
-    import json
-
+import simplejson
 import base64
 
 from django.http import HttpResponse
