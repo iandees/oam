@@ -3,8 +3,12 @@ from django.http import Http404, HttpResponse
 import django.conf
 import sys
 import traceback
-import simplejson
 import base64
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 from django.http import HttpResponse
 from django.contrib.auth import authenticate, login
@@ -59,7 +63,7 @@ def generate_error_response(exception, format="text", status_code=None, request=
        ... except ApplicationError, E:
        ...    h = HttpRequest()
        ...    response = generate_error_response(E, format='json', request=h)
-       >>> data = simplejson.loads(response.content)
+       >>> data = json.loads(response.content)
        >>> data['error']
        u'Failed'
        
@@ -125,9 +129,8 @@ def jsonexception(func):
 def json_response(request, obj, warnings=None, errors=None):
     """Take an object. If the object has a to_json method, call it, 
        and take either the result or the original object and serialize
-       it using simplejson. If a callbakc was sent with the http_request,
-       wrap the response up in that and return it, otherwise, just return
-       it."""
+       it using json. If a callbakc was sent with the http_request, wrap
+       the response up in that and return it, otherwise, just return it."""
     if hasattr(obj, 'to_json'):
         obj = obj.to_json()
     if request.GET.has_key('_sqldebug'):
@@ -135,7 +138,7 @@ def json_response(request, obj, warnings=None, errors=None):
         obj['sql'] = django.db.connection.queries
     if warnings:
         obj['warnings'] = warnings
-    data = simplejson.dumps(obj, indent=2)
+    data = json.dumps(obj, indent=2)
     if request.GET.has_key('callback'):
         data = "%s(%s);" % (request.GET['callback'], data)
     elif request.GET.has_key('handler'):
