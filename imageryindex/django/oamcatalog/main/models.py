@@ -141,6 +141,10 @@ class Image(models.Model):
     owner = models.ForeignKey(User)
     history = HistoryField()
     objects = models.GeoManager()
+    def resolution(self):
+        xmin, ymin, xmax, ymax = self.bbox.extent
+        return max((ymax-ymin)/float(height),
+                   (xmax-xmin)/float(width))
     def from_json(self, data, user):
         if 'source_url' in data:
             data['url'] = data['source_url']
@@ -203,7 +207,6 @@ class Image(models.Model):
             'bbox': list(self.bbox.extent),
             'width': self.width,
             'height': self.height,
-            'hash': self.hash,
             'archive': self.archive,
             'license': self.license.to_json(),
             'user': self.owner.id,
@@ -219,6 +222,8 @@ class Image(models.Model):
             data['vrt'] = self.vrt
             data['vrt_date'] =  self.vrt_date
             data['crs'] = self.crs
+            data['resolution'] = self.resolution
+            data['hash']: self.hash,
         return data    
 
 class Mirror(models.Model):

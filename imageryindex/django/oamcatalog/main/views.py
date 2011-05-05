@@ -122,9 +122,7 @@ def image(request, id=None):
             left, bottom, right, top = map(float, request.GET['bbox'].split(","))
             box = Polygon.from_bbox([left, bottom, right, top])
             images = images.filter(bbox__intersects=box)
-        limit = int(request.GET.get("limit", 10000))   
-        if limit > 10000:
-            limit = 10000
+        limit = min(int(request.GET.get("limit", 10000)), 10000)
         start = int(request.GET.get("start", 0))    
         end = start + limit
         images = images.order_by("-id")    
