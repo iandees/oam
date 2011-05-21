@@ -1,0 +1,17 @@
+OAM Documentation
+-----------------
+
+These docs are written using reStructuredText and Sphinx.
+
+
+Install Sphinx (http://sphinx.pocoo.org/) like:
+
+    easy_install -U Sphinx
+
+    
+Create the docs by typing:
+
+    make html
+
+
+The result will be viewable via _build/html/index.html

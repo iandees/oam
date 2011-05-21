@@ -1,11 +1,5 @@
 """ In-progress TileStache provider for OpenAerialMap.
 
-TODO:
-    - stop using hard-coded junk username/password in oam.Client constructor.
-    - add archive server blacklist and whitelist.
-    - enforce spherical mercator projection?
-    - allow for local cache of big remote files
-
 Example configuration file:
 
     {
@@ -14,7 +8,11 @@ Example configuration file:
       {
         "oam":
         {
-            "provider": {"class": "oam.tiles.Provider"}
+            "provider":
+            {
+              "class": "oam.tiles:Provider",
+              "kwargs": {"username": "john", "password": "doe"}
+            }
         }
       }
     }
@@ -22,15 +20,28 @@ Example configuration file:
 Read more about TileStache and its configuration here:
     http://tilestache.org/doc/
     http://tilestache.org/doc/#configuring-tilestache
+
+TODO:
+    - add archive server blacklist and whitelist.
+    - enforce spherical mercator projection?
+    - allow for local cache of big remote files
 """
 from tempfile import mkstemp
-from os import close, unlink
 from urlparse import urljoin
 from copy import deepcopy
 from xml.dom.minidom import getDOMImplementation
 
+import os
+# Make sure that GDAL doesn't attempt to GetFileList over /vsicurl/
+# as this can get very slow when directory listings are lengthy.
+os.environ["GDAL_DISABLE_READDIR_ON_OPEN"]="YES"
+
 import oam
-import PIL.Image
+
+try:
+    from PIL import Image
+except ImportError:
+    import Image
 
 from ModestMaps.Core import Point
 from TileStache.Core import KnownUnknown
@@ -44,14 +55,17 @@ except ImportError:
 
 class Provider:
     
-    def __init__(self, layer):
+    def __init__(self, layer, username='username', password='password'):
         self.layer = layer
-        self.client = oam.Client('username', 'password')
+        self.client = oam.Client(username, password)
 
     def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, zoom):
-    
-        garbage = []
+        """ Return a PIL Image for a given area.
         
+            For more info: http://tilestache.org/doc/#custom-providers.
+        """
+        driver = gdal.GetDriverByName('GTiff')
+
         try:
             # Figure out bbox and contained images -----------------------------
             
@@ -59,45 +73,32 @@ class Provider:
             ne = self.layer.projection.projLocation(Point(xmax, ymax))
             
             bbox = sw.lon, sw.lat, ne.lon, ne.lat
-            images = self.client.images_by_bbox(bbox)
+            images = self.client.images_by_bbox(bbox, output='full')
             images = map(localize_image_path, images)
+            
+            if not images:
+                # once you go black
+                return Image.new('RGB', (width, height), (0, 0, 0))
             
             # Set up a target oam.Image ----------------------------------------
             
-            handle, junkpath = mkstemp(prefix='oamtiles-', suffix='.vrt')
-            garbage.append(junkpath)
-            close(handle)
-            
-            target = oam.Image(junkpath, bbox, width, height, crs=images[0].crs)
+            target = oam.Image("unused", bbox, width, height, crs=images[0].crs)
             
             # Build input gdal datasource --------------------------------------
             
             vrtdoc = build_vrt(target, images)
-
-            handle, vrtpath = mkstemp(prefix='oamtiles-', suffix='.vrt')
-            garbage.append(vrtpath)
-            close(handle)
-            
-            vrtfile = open(vrtpath, 'w')
-            vrtdoc.writexml(vrtfile, encoding='utf-8')
-            vrtfile.close()
-            
-            source_ds = gdal.Open(vrtpath)
+            vrt = vrtdoc.toxml('utf-8')
+            source_ds = gdal.Open(vrt)
             
             assert source_ds, \
-                "oam.tiles.Provider couldn't open the file: %s" % vrtpath
+                "oam.tiles.Provider couldn't open the VRT: %s" % vrt
             
             # Prepare output gdal datasource -----------------------------------
-        
-            handle, areapath = mkstemp(prefix='oamtiles-', suffix='.tif')
-            garbage.append(areapath)
-            close(handle)
-            
-            driver = gdal.GetDriverByName('GTiff')
-            destination_ds = driver.Create(areapath, width, height, 3)
+
+            destination_ds = driver.Create('/vsimem/output', width, height, 3)
 
             assert destination_ds is not None, \
-                "oam.tiles.Provider couldn't make the file: %s" % areapath
+                "oam.tiles.Provider couldn't make the file: /vsimem/output"
             
             merc = osr.SpatialReference()
             merc.ImportFromProj4(srs)
@@ -116,11 +117,10 @@ class Provider:
             
             r, g, b = [destination_ds.GetRasterBand(i).ReadRaster(0, 0, width, height) for i in (1, 2, 3)]
             data = ''.join([''.join(pixel) for pixel in zip(r, g, b)])
-            area = PIL.Image.fromstring('RGB', (width, height), data)
-    
+            area = Image.fromstring('RGB', (width, height), data)
+
         finally:
-            for filename in garbage:
-                unlink(filename)
+            driver.Delete("/vsimem/output")
 
         return area
     
