@@ -197,7 +197,7 @@ class Image(models.Model):
     def to_json(self, output='full'):
         data = {
             'id': self.id,
-            'source_url': self.url,
+            'url': self.url,
             'file_size': self.file_size,
             'file_format': self.file_format,
             'bbox': list(self.bbox.extent),
@@ -212,7 +212,7 @@ class Image(models.Model):
         urls = [self.url]
         mirrors = Mirror.objects.filter(image=self)
         urls = urls + [mirror.url for mirror in mirrors]
-        data['urls'] = urls
+        data['mirrors'] = urls
         if self.attribution:
             data['attribution'] = self.attribution.to_json()
         if output == "full":    
