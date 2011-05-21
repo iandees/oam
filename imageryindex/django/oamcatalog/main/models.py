@@ -223,7 +223,7 @@ class Image(models.Model):
             data['vrt_date'] =  self.vrt_date
             data['crs'] = self.crs
             data['resolution'] = self.resolution
-            data['hash']: self.hash,
+            data['hash'] = self.hash
         return data    
 
 class Mirror(models.Model):
