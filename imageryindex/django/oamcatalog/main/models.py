@@ -70,16 +70,19 @@ class Layer(models.Model):
         return '/layer/%s/%s/' % (self.id, slugify(self.name))
 
     def from_json(self, data, user):
-        self.name = data['name']
-        self.description = data['description']
+        if 'name' in data:
+            self.name = data['name']
+        if 'description' in data:
+            self.description = data['description']
         self.owner = user
         self.save()
-        for image in data['images']:
-            if isinstance(image, int):
-                im = Image.objects.get(pk=image)
-                self.image_set.add(im)
-            else:
-                raise ApplicationError(["Image array objects must be ints (not %s)" % type(image)])
+        if 'images' in data:
+            for image in data['images']:
+                if isinstance(image, int):
+                    im = Image.objects.get(pk=image)
+                    self.image_set.add(im)
+                else:
+                    raise ApplicationError(["Image array objects must be ints (not %s)" % type(image)])
         self.save()
         return self
 
@@ -89,7 +92,7 @@ class Layer(models.Model):
             'name': self.name,
             'description': self.description,
             'owner': self.owner.id,
-            'images': [i.id for i in self.image_set.all()]
+            'images': [i['id'] for i in self.image_set.values('id')]
         }    
 
 class WMS(models.Model):

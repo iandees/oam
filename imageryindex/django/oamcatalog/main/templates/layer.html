@@ -1,6 +1,40 @@
 {% extends "base.html" %}
 {% block title %}{{layer.name}}{% endblock %}
 {% block content %}
+<style type="text/css">
+    .ui-state-hover { background-color: #ffC }
+    .inlineEdit-placeholder { font-style: italic; color: #555; }
+    .editable_description textarea {
+        width: 500px;
+        height: 100px;
+    }   
+    .editable_title input {
+        width: 500px;
+    }    
+</style>        
+<script>
+$(function(){
+    $('.editable_title').inlineEdit({
+        'save': function(e, data) {
+            var id = {{layer.id}};
+            var json = {'id': id, 'name': data.value};
+            var url = '/api/layer/' + id + '/';
+            var data = $.toJSON(json);
+            jQuery.post(url, data);
+        }
+    });
+    $('.editable_description').inlineEdit({
+        'control': 'textarea',
+        'save': function(e, data) {
+            var id = {{layer.id}};
+            var json = {'id': id, 'description': data.value};
+            var url = '/api/layer/' + id + '/';
+            var data = $.toJSON(json);
+            jQuery.post(url, data);
+        }
+    });
+});    
+</script>    
 <div style="float:right">
 {% if prev %} 
  <a href="{{prev.get_absolute_url}}">« {{prev.id}}</a>
@@ -12,8 +46,8 @@
  <a href="{{next.get_absolute_url}}">» {{next.id}}</a>
 {% endif %} 
 </div>
-<h2>{{ layer.name }}</h2>
-<p>{{ layer.description }}</p>
+<h2><span{% if not user.is_anonymous %} class="editable_title" {%endif %}>{{ layer.name }}</span></h2>
+<p><span{% if not user.is_anonymous %} class="editable_description"{%endif %}>{{ layer.description }}</span></p>
 <p>Total images: {{ layer.image_set.count }}</p>
 <ul>
 {% for i in image_ids %}
