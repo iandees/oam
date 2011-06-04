@@ -22,6 +22,12 @@ def layer(request, id=None):
     elif id != None and request.method == "POST":
         l = Layer.objects.get(pk=id)
         return handle_update(request, l)
+    elif id != None:
+        l = Layer.objects.get(pk=id)
+        if request.method == "DELETE":
+            i.delete()
+            return json_response(request, "")
+        return json_response(request, l)
     else:
         layers = Layer.objects.all()
         data = {'layers': [
@@ -123,7 +129,7 @@ def image(request, id=None):
             left, bottom, right, top = map(float, request.GET['bbox'].split(","))
             box = Polygon.from_bbox([left, bottom, right, top])
             images = images.filter(bbox__intersects=box)
-        limit = min(int(request.GET.get("limit", 10000)), 10000)
+        limit = min(int(request.GET.get("limit", 1000)), 10000)
         start = int(request.GET.get("start", 0))    
         end = start + limit
         images = images.order_by("-id")    
