@@ -1,5 +1,5 @@
 # Create your views here.
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 import simplejson
 import urllib
 from main.models import Layer, Image, User, License, Mirror
@@ -207,3 +207,6 @@ def image_browse(request, id):
     if prev.count(): prev = prev[0]
     else: prev = None
     return render(request, "image.html", {'image': i, 'next': next, 'prev': prev})
+
+def profile(request):
+    return HttpResponseRedirect("/")
