@@ -4,6 +4,7 @@ import django.conf
 import sys
 import traceback
 import base64
+from django.shortcuts import render_to_response, get_object_or_404
 
 try:
     import json
@@ -252,4 +253,10 @@ def has_perm_or_basicauth(perm, realm = ""):
         return wrapper
     return view_decorator
 
-
+def render(request, template, args=None):
+    if not args:
+        args = {'user': request.user}
+    else:
+        args['user'] = request.user
+    
+    return render_to_response(template, args)

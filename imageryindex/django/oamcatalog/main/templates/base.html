@@ -9,6 +9,12 @@
  </div>
  <div id="mainnav" class="nav">
  <a href="/layer/">Browse Layers</a>
+  {% if not user.is_anonymous %}
+   <div id="user">Logged in as {{user}} | <a href="/accounts/logout/">Logout</a></div>
+  {% else %}
+    <div id="user"><a href="/accounts/login/">Login</a></div>
+  {% endif %}
+
  </div>
  <div id="main">
  {% block content %}

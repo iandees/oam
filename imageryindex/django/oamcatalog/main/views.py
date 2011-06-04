@@ -135,12 +135,12 @@ def image(request, id=None):
 
 def home(request):
     images = Image.objects.order_by("-id")[0:10]
-    return render_to_response("home.html", {'images': images})
+    return render(request, "home.html", {'images': images})
 
 def license_browse(request, id):
     l = License.objects.get(pk=id)
     images = l.image_set.order_by("-id")[0:5]
-    return render_to_response("license.html", {'license': l, 'recent_images': images})
+    return render(request, "license.html", {'license': l, 'recent_images': images})
 
 def layer_list(request):
     item_list = Layer.objects.all()
@@ -165,7 +165,7 @@ def layer_list(request):
         if 'q' in request.GET:
             prev_args['q'] = request.GET['q']
         prev_args = urllib.urlencode(prev_args)
-    return render_to_response("layer_list.html", {'layers': sublist, 'total': total, 
+    return render(request, "layer_list.html", {'layers': sublist, 'total': total, 
                                                   'start': start + 1, 'end': end,
                                                   'next_args': next_args, 'prev_args': prev_args})
 
@@ -178,7 +178,7 @@ def layer_browse(request, id):
     if prev.count(): prev = prev[0]
     else: prev = None
     image_ids = l.image_set.values("id")
-    return render_to_response("layer.html", {'layer': l, 'image_ids': image_ids, 'next': next, 'prev': prev})
+    return render(request, "layer.html", {'layer': l, 'image_ids': image_ids, 'next': next, 'prev': prev})
 
 def image_browse(request, id):
     i = Image.objects.get(pk=id)
@@ -188,4 +188,4 @@ def image_browse(request, id):
     prev = Image.objects.filter(id__lt=id).order_by("-id")
     if prev.count(): prev = prev[0]
     else: prev = None
-    return render_to_response("image.html", {'image': i, 'next': next, 'prev': prev})
+    return render(request, "image.html", {'image': i, 'next': next, 'prev': prev})
