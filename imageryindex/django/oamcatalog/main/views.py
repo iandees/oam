@@ -132,11 +132,23 @@ def image(request, id=None):
         limit = min(int(request.GET.get("limit", 1000)), 10000)
         start = int(request.GET.get("start", 0))    
         end = start + limit
-        images = images.order_by("-id")    
-        data = {'images': [
-            i.to_json(output=output) for i in images[start:end]
-            ]
-        }   
+        images = images.order_by("-id") 
+
+        # Instantiating full image objects for thousands of images is slow;
+        # instead, just use .values and make our own dict here. Adding more 
+        # properties here should be done with consideration.
+        if output == 'simple':
+           data = {'images': 
+            [dict(x) for x in images[start:end].values("id", "width", "height", "url", "bbox")]
+           } 
+           for i in data['images']:
+            i['bbox'] = list(i['bbox'].extent)
+        
+        else:
+            data = {'images': [
+                i.to_json(output=output) for i in images[start:end]
+                ]
+            }   
         return json_response(request, data)
 
 def home(request):
