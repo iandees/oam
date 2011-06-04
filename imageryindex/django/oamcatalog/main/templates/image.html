@@ -21,7 +21,7 @@
 <h2>Layers</h2>
 <ul>
 {% for layer in image.layers.all %}
-  <li><a href="/layer/{{layer.id}}">{{layer.name}}</a></li>
+  <li><a href="{{layer.get_absolute_url}}">{{layer.name}}</a></li>
 {% endfor %}
 </ul>
 {% endif %}

@@ -2,13 +2,13 @@
 {% block content %}
 <div style="float:right">
 {% if prev %} 
- <a href="/layer/{{prev.id}}/">« {{prev.id}}</a>
+ <a href="{{prev.get_absolute_url}}">« {{prev.id}}</a>
 {% endif %}
 {% if prev and next %}
  |
 {% endif %}
 {% if next %}
- <a href="/layer/{{next.id}}/">» {{next.id}}</a>
+ <a href="{{next.get_absolute_url}}">» {{next.id}}</a>
 {% endif %} 
 </div>
 <h2>{{ layer.name }}</h2>
