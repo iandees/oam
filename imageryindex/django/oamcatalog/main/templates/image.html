@@ -25,4 +25,13 @@
 {% endfor %}
 </ul>
 {% endif %}
+{% if image.mirror_set.count %}
+<h2>Mirrors</h2>
+<ul>
+{% for mirror in image.mirror_set.all %}
+  <li><a href="{{mirror.url}}">{{mirror.site}}</a></li>
+{% endfor %}
+{% else %}
+ No mirrors yet!
+{% endif %}
 {% endblock %}

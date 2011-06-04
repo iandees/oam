@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from main.helpers import ApplicationError
 from django.conf import settings
 from django.contrib.gis.geos import Polygon
+import urlparse
 
 from django.template.defaultfilters import slugify
 if settings.HISTORY_SUPPORT:
@@ -237,7 +238,9 @@ class Mirror(models.Model):
     user = models.ForeignKey(User)
     history = HistoryField()
     last_updated = models.DateTimeField(auto_now=True)
-
+    
+    def site(self):
+        return urlparse.urlparse(self.url)[1]
     def from_json(self, data, user):
         im = Image.objects.get(pk=data['image'])
         self.image = im
