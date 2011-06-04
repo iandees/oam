@@ -1,5 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
+<div style="float:right">
+{% if prev %} 
+ <a href="/image/{{prev.id}}/">« {{prev.id}}</a>
+{% endif %}
+{% if prev and next %}
+ |
+{% endif %}
+{% if next %}
+ <a href="/image/{{next.id}}/">» {{next.id}}</a>
+{% endif %} 
+</div>
 <ul>
  <li>URL: <a href="{{image.url}}">URL</a></li>
  <li>Image Size: {{image.width}} x {{image.height}}</li>

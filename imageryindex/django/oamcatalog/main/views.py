@@ -143,9 +143,21 @@ def license_browse(request, id):
 
 def layer_browse(request, id):
     l = get_object_or_404(Layer, pk=id)
+    next = Layer.objects.filter(id__gt=id).order_by("id")
+    if next.count(): next = next[0]
+    else: next = None
+    prev = Layer.objects.filter(id__lt=id).order_by("-id")
+    if prev.count(): prev = prev[0]
+    else: prev = None
     image_ids = l.image_set.values("id")
-    return render_to_response("layer.html", {'layer': l, 'image_ids': image_ids})
+    return render_to_response("layer.html", {'layer': l, 'image_ids': image_ids, 'next': next, 'prev': prev})
 
 def image_browse(request, id):
     i = Image.objects.get(pk=id)
-    return render_to_response("image.html", {'image': i})
+    next = Image.objects.filter(id__gt=id).order_by("id")
+    if next.count(): next = next[0]
+    else: next = None
+    prev = Image.objects.filter(id__lt=id).order_by("-id")
+    if prev.count(): prev = prev[0]
+    else: prev = None
+    return render_to_response("image.html", {'image': i, 'next': next, 'prev': prev})

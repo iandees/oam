@@ -1,5 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
+<div style="float:right">
+{% if prev %} 
+ <a href="/layer/{{prev.id}}/">« {{prev.id}}</a>
+{% endif %}
+{% if prev and next %}
+ |
+{% endif %}
+{% if next %}
+ <a href="/layer/{{next.id}}/">» {{next.id}}</a>
+{% endif %} 
+</div>
 <h2>{{ layer.name }}</h2>
 <p>{{ layer.description }}</p>
 <p>Total images: {{ layer.image_set.count }}</p>
