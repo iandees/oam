@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from main.helpers import ApplicationError
 from django.conf import settings
 from django.contrib.gis.geos import Polygon
+
+from django.template.defaultfilters import slugify
 if settings.HISTORY_SUPPORT:
     import fullhistory
     from fullhistory.models import HistoryField
@@ -63,6 +65,9 @@ class Layer(models.Model):
     description = models.TextField()
     owner = models.ForeignKey(User)
     date = models.DateTimeField(blank=True, null=True)
+    def get_absolute_url(self):
+        return '/layer/%s/%s/' % (self.id, slugify(self.name))
+
     def from_json(self, data, user):
         self.name = data['name']
         self.description = data['description']
@@ -143,8 +148,8 @@ class Image(models.Model):
     objects = models.GeoManager()
     def resolution(self):
         xmin, ymin, xmax, ymax = self.bbox.extent
-        return max((ymax-ymin)/float(height),
-                   (xmax-xmin)/float(width))
+        return max((ymax-ymin)/float(self.height),
+                   (xmax-xmin)/float(self.width))
     def from_json(self, data, user):
         if 'source_url' in data:
             data['url'] = data['source_url']
@@ -222,7 +227,7 @@ class Image(models.Model):
             data['vrt'] = self.vrt
             data['vrt_date'] =  self.vrt_date
             data['crs'] = self.crs
-            data['resolution'] = self.resolution
+            data['resolution'] = self.resolution()
             data['hash'] = self.hash
         return data    
 
