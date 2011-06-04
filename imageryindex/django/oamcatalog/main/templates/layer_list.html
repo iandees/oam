@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Layers{% endblock %}
+{% block content %}
+<form action='/layer/'>
+Search: <input type='text' name='q' /> <input type='submit' value='Search' />
+</form>
+Showing results {{ start }} - {{ end }} of {{ total }}
+{% if prev_args %}<a href="/layer/?{{prev_args}}">Previous</a> {% endif %}
+{% if prev_args and next_args %} | {% endif %}
+{% if next_args %}<a href="/layer/?{{next_args}}">Next</a> {% endif %}
+<ul>
+{% for layer in layers %}
+  <li><a href="{{layer.get_absolute_url}}">{{layer.name}}</a> ({{ layer.image_set.count }} images)</li>
+{%endfor %}
+</ul>
+{% endblock %}

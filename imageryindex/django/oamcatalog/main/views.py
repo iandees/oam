@@ -1,6 +1,7 @@
 # Create your views here.
 from django.http import HttpResponse
 import simplejson
+import urllib
 from main.models import Layer, Image, User, License, Mirror
 from django.contrib.gis.geos import Polygon
 from main.helpers import *
@@ -140,6 +141,33 @@ def license_browse(request, id):
     l = License.objects.get(pk=id)
     images = l.image_set.order_by("-id")[0:5]
     return render_to_response("license.html", {'license': l, 'recent_images': images})
+
+def layer_list(request):
+    item_list = Layer.objects.all()
+    start = int(request.GET.get('start', 0))
+    max = 25
+    if 'q' in request.GET:
+        for term in request.GET['q'].split(" "):
+            item_list = item_list.filter(name__icontains=term)
+    total = item_list.count()
+    sublist = item_list[start:start+max]
+    end = min(start+max, total)
+
+    next_args = None
+    prev_args = None
+    if (start + max) < total:
+        next_args = { 'start': end }
+        if 'q' in request.GET:
+            next_args['q'] = request.GET['q']
+        next_args = urllib.urlencode(next_args)
+    if (start - max) >= 0:
+        prev_args = { 'start': start-max }
+        if 'q' in request.GET:
+            prev_args['q'] = request.GET['q']
+        prev_args = urllib.urlencode(prev_args)
+    return render_to_response("layer_list.html", {'layers': sublist, 'total': total, 
+                                                  'start': start + 1, 'end': end,
+                                                  'next_args': next_args, 'prev_args': prev_args})
 
 def layer_browse(request, id):
     l = get_object_or_404(Layer, pk=id)
