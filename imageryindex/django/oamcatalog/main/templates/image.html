@@ -5,5 +5,13 @@
  <li>Image Size: {{image.width}} x {{image.height}}</li>
  <li>License: <a href="/license/{{image.license.id}}/">{{image.license.name}}</a></li>
  <li>BBOX: {{ image.bbox.extent }}</li>
-</ul> 
+</ul>
+{% if image.layers.count %}
+<h2>Layers</h2>
+<ul>
+{% for layer in image.layers.all %}
+  <li><a href="/layer/{{layer.id}}">{{layer.name}}</a></li>
+{% endfor %}
+</ul>
+{% endif %}
 {% endblock %}

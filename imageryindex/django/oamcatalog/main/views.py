@@ -143,7 +143,9 @@ def license_browse(request, id):
 
 def layer_browse(request, id):
     l = get_object_or_404(Layer, pk=id)
-    return render_to_response("layer.html", {'layer': l})
+    image_ids = l.image_set.values("id")
+    return render_to_response("layer.html", {'layer': l, 'image_ids': image_ids})
+
 def image_browse(request, id):
     i = Image.objects.get(pk=id)
     return render_to_response("image.html", {'image': i})

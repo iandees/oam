@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>{{ layer.name }}</h2>
-<p>{{layer.description}}</p>
+<p>{{ layer.description }}</p>
+<p>Total images: {{ layer.image_set.count }}</p>
 <ul>
-{% for i in layer.image_set.all %}
-  <li>{{i.id}}</li>
+{% for i in image_ids %}
+  <li><a href="/image/{{i.id}}">{{i.id}}</a></li>
 {% endfor %}
 </ul>
 {% endblock %}  
