@@ -2,6 +2,7 @@
 {% load i18n %}
 
 {% block content %}
+<p>OpenAerialMap uses OSGeo-based LDAP logins.</p>
 <form method="post" action=".">
   {%csrf_token%}
   {{ form.as_p }}
@@ -10,6 +11,6 @@
   <input type="hidden" name="next" value="{{ next }}" />
 </form>
 
-<p>{% trans "Forgot password" %}? <a href="{% url auth_password_reset %}">{% trans "Reset it" %}</a>!</p>
-<p>{% trans "Not member" %}? <a href="{% url registration_register %}">{% trans "Register" %}</a>!</p>
+<!--<p>{% trans "Forgot password" %}? <a href="{% url auth_password_reset %}">{% trans "Reset it" %}</a>!</p>-->
+<p>{% trans "Not member" %}? <a href="https://www2.osgeo.org/cgi-bin/ldap_create_user.py">{% trans "Register" %}</a>!</p>
 {% endblock %}
