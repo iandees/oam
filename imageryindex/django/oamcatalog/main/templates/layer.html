@@ -33,7 +33,8 @@ $(function(){
             jQuery.post(url, data);
         }
     });
-});    
+});   
+document.body.onload = function() { createMap('/api/image/?layer={{layer.id}}&limit=500', document.getElementById("map")); }
 </script>    
 <div style="float:right">
 {% if prev %} 
@@ -44,7 +45,9 @@ $(function(){
 {% endif %}
 {% if next %}
  <a href="{{next.get_absolute_url}}">» {{next.id}}</a>
-{% endif %} 
+{% endif %}
+<br />
+<div id="map" style="width: 400px; height: 400px;"></div>
 </div>
 <h2><span{% if not user.is_anonymous %} class="editable_title" {%endif %}>{{ layer.name }}</span></h2>
 <p><span{% if not user.is_anonymous %} class="editable_description"{%endif %}>{{ layer.description }}</span></p>

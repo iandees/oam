@@ -1,10 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Home{% endblock %}
 {% block content %}
-  <h3>Recently Uploaded Images</h3>
+<script>
+  document.body.onload = function() { createMap("/api/image/?limit=100", document.getElementById("map") ); }
+</script>  
+<div style="float: right; width: 200px;">
+<h3>Recently Uploaded Images</h3>
   <ul>
   {% for image in images %}
     <li><a href="/image/{{image.id}}/">{{image.id}}</a></li>
   {% endfor %}
   </ul>
+</div>
+<div id="map" style="width: 512px; height: 500px;"></div>
 {% endblock %}  
