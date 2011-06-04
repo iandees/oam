@@ -2,10 +2,12 @@
 from django.http import HttpResponse, HttpResponseRedirect
 import simplejson
 import urllib
+from django.forms import ModelForm
 from main.models import Layer, Image, User, License, Mirror
 from django.contrib.gis.geos import Polygon
 from main.helpers import *
 from django.shortcuts import render_to_response, get_object_or_404
+from django.contrib.auth.decorators import login_required
 
 @jsonexception
 def layer(request, id=None):
@@ -186,6 +188,23 @@ def layer_list(request):
     return render(request, "layer_list.html", {'layers': sublist, 'total': total, 
                                                   'start': start + 1, 'end': end,
                                                   'next_args': next_args, 'prev_args': prev_args})
+
+@login_required
+def layer_create(request):
+    class LayerForm(ModelForm):
+        class Meta:
+            model = Layer
+            fields = ('name', 'description')
+
+    if request.method == "POST":
+        f = LayerForm(request.POST)
+        layer = f.save(commit=False)
+        layer.owner = request.user
+        layer.save()
+        return HttpResponseRedirect(layer.get_absolute_url())
+    else:
+        f = LayerForm()
+    return render(request, "layer_new.html", {'form': f})    
 
 def layer_browse(request, id):
     l = get_object_or_404(Layer, pk=id)
