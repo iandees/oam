@@ -18,7 +18,7 @@
         url: url,
         type: 'POST',
         'success': function() { 
-            $("#layer_list").append("<li id='layer"+id+"'><a href='/image/"+id+"/'>"+name+"</a></li>");
+            $("#layer_list").append("<li id='layer"+id+"'><a href='/layer/"+id+"/'>"+name+"</a></li>");
             $("#new_layer").val('');
         }
     }); 
