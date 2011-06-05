@@ -190,7 +190,7 @@ def license_browse(request, id):
     return render(request, "license.html", {'license': l, 'recent_images': images})
 
 def layer_list(request):
-    item_list = Layer.objects.all()
+    item_list = Layer.objects.all().order_by("id")
     start = int(request.GET.get('start', 0))
     max = 25
     if 'q' in request.GET:
