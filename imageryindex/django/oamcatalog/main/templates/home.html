@@ -1,9 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Home{% endblock %}
-{% block content %}
+{% block extrahead %}
 <script>
-  document.body.onload = function() { createMap("/api/image/?limit=100", document.getElementById("map") ); }
-</script>  
+function start() { createMap("/api/image/?limit=100", document.getElementById("map") ); }
+</script>
+{% endblock %}
+{% block onload %} onload="start();"{% endblock %}
+{% block content %}
 <div style="float: right; width: 200px;">
 <h3>Recently Uploaded Images</h3>
   <ul>

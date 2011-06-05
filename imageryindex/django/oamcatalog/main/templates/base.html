@@ -11,7 +11,7 @@
    <script type="text/javascript" src="/static/jq/jquery-ui-1.8.13.custom.min.js"></script>
    {% block extrahead %}{% endblock %}
  </head>
- <body>
+ <body {%block onload%}{%endblock %}>
  <div id="header">
    <h1><a href="/">{% block heading %}OpenAerialMap{% endblock %}</a></h1>
  </div>
