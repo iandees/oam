@@ -1,4 +1,58 @@
 {% extends "base.html" %}
+{% block extrahead %}
+<script>
+  function deleteLayer(id) {
+    var url = '/api/image/{{image.id}}/layer/'+id+'/';
+    jQuery.ajax({
+        url: url,
+        type: 'DELETE',
+        'success': function() { 
+            $('#layer'+id).remove();
+        }
+    }); 
+    return false;
+  }
+  function addLayer(id, name) {
+    var url = '/api/image/{{image.id}}/layer/'+id+'/';
+    jQuery.ajax({
+        url: url,
+        type: 'POST',
+        'success': function() { 
+            $("#layer_list").append("<li id='layer"+id+"'><a href='/image/"+id+"/'>"+name+"</a></li>");
+            $("#new_layer").val('');
+        }
+    }); 
+    return false;
+  }
+
+
+$(function() {
+        $( "#new_layer" ).autocomplete({
+            source: function( request, response ) {
+                $.ajax({
+                    url: "/api/layer/",
+                    data: {
+                        output: 'simple',
+                        q: request.term
+                    },
+                    success: function( data ) {
+                        response( $.map( data.layers, function( item ) {
+                            return {
+                                value: item.id, 
+                                label: item.name + " ("+item.image_count +" images)",
+                                name: item.name
+                            }
+                        }));
+                    }
+                });
+            },
+            select: function( event, ui ) {
+                addLayer(ui.item.value, ui.item.name);
+            }
+        });
+    });
+</script>  
+{% endblock %}
 {% block content %}
 <div style="float:right">
 {% if prev %} 
@@ -19,12 +73,14 @@
 </ul>
 {% if image.layers.count %}
 <h2>Layers</h2>
-<ul>
+<ul id="layer_list">
 {% for layer in image.layers.all %}
-  <li><a href="{{layer.get_absolute_url}}">{{layer.name}}</a></li>
+  <li id='layer{{layer.id}}'><a href="{{layer.get_absolute_url}}">{{layer.name}}</a> (<a href="#" onclick='return deleteLayer({{layer.id}})'>Delete?</a>)</li>
 {% endfor %}
 </ul>
 {% endif %}
+
+Add image to new Layer: <input type="text" id="new_layer" /> <input type="submit" />
 {% if image.mirror_set.count %}
 <h2>Mirrors</h2>
 <ul>

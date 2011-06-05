@@ -4,10 +4,24 @@ import simplejson
 import urllib
 from django.forms import ModelForm
 from main.models import Layer, Image, User, License, Mirror
+from django.db.models import Count
 from django.contrib.gis.geos import Polygon
 from main.helpers import *
 from django.shortcuts import render_to_response, get_object_or_404
 from django.contrib.auth.decorators import login_required
+
+@logged_in_or_basicauth()
+def image_layer(request, image=None, layer=None):
+    image = get_object_or_404(Image, pk=image)
+    layer = get_object_or_404(Layer, pk=layer)
+    if request.method == "POST":
+        image.layers.add(layer)
+        return json_response(request, image.to_json())
+    elif request.method == "DELETE":
+        image.layers.remove(layer)
+        return json_response(request, image.to_json())
+    else:
+        raise Exception("Only POST or DELETE to this resource.")
 
 @jsonexception
 def layer(request, id=None):
@@ -32,10 +46,23 @@ def layer(request, id=None):
         return json_response(request, l)
     else:
         layers = Layer.objects.all()
-        data = {'layers': [
-            l.to_json() for l in layers
-            ]
-        }    
+        if 'q' in request.GET:
+            for term in request.GET['q'].split(" "):
+                layers = layers.filter(name__icontains=term)
+        if request.GET.get('output') == "simple":
+            layers = layers.annotate(Count('image'))
+            data = {'layers': 
+             [dict(x) for x in layers.values("id", "name", "description", "image__count")]
+            }
+            for l in data['layers']:
+                l['image_count'] = l['image__count']
+                del l['image__count']
+
+        else:    
+            data = {'layers': [
+                l.to_json() for l in layers
+                ]
+            }    
         return json_response(request, data)
 
 @jsonexception

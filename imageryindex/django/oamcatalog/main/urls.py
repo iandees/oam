@@ -14,6 +14,7 @@ urlpatterns = patterns('main.views',
     (r'^api/license/(?P<id>[0-9]+)/$', 'license'),
     (r'^api/image/$', 'image'),
     (r'^api/image/(?P<id>[0-9]+)/$', 'image'),
+    (r'^api/image/(?P<image>[0-9]+)/layer/(?P<layer>[0-9]+)/$', 'image_layer'),
     (r'^api/mirror/$', 'mirror'),
     (r'^api/mirror/(?P<id>[0-9]+)/$', 'mirror'),
 )
