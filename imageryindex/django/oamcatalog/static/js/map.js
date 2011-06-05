@@ -15,14 +15,39 @@ var OAMFormat = OpenLayers.Class(OpenLayers.Format.JSON, {
             var image = obj.images[i];
             var bounds = OpenLayers.Bounds.fromArray(image.bbox);
             var f = new OpenLayers.Feature.Vector(bounds.toGeometry());
+            f.image = image;
             features.push(f);
         }
         return features;
     }
 });
+
+var map, selectControl, selectedFeature;
+function onPopupClose(evt) {
+    selectControl.unselect(selectedFeature);
+    evt.stopPropagation()
+}
+
+function onFeatureSelect(feature) {
+    selectedFeature = feature;
+    popup = new OpenLayers.Popup.FramedCloud("chicken",
+                                 feature.geometry.getBounds().getCenterLonLat(),
+                                 null,
+                                 '<div><a href="/image/' + feature.image.id + '">Image ' + feature.image.id + '</a></div>',
+                                 null, true, onPopupClose);
+    feature.popup = popup;
+    map.addPopup(popup);
+}
+
+function onFeatureUnselect(feature) {
+    map.removePopup(feature.popup);
+    feature.popup.destroy();
+    feature.popup = null;
+    selectedFeature = null;
+}
         
 function createMap(url, div){
-    var map = new OpenLayers.Map( 'map', {displayProjection: new OpenLayers.Projection("EPSG:4326")} );
+    map = new OpenLayers.Map( 'map', {displayProjection: new OpenLayers.Projection("EPSG:4326")} );
     var layer = new OpenLayers.Layer.OSM("OSM");
     map.addLayer(layer);
     layer = new OpenLayers.Layer.Vector("", {
@@ -41,6 +66,10 @@ function createMap(url, div){
         }  
     });   
 //    map.addControl(new OpenLayers.Control.Permalink());
+    selectControl = new OpenLayers.Control.SelectFeature(layer,
+        {onSelect: onFeatureSelect, onUnselect: onFeatureUnselect});
+    map.addControl(selectControl);
+    selectControl.activate();
     
     if (!map.getCenter()) {
         map.zoomToMaxExtent();
